@@ -1,0 +1,26 @@
+{
+  "short_name": "já Receipt",
+  "name": "já Receipt - Valencia Col",
+  "description": "Ferramenta profissional de gestão de recibos por Valencia Col.",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "start_url": "/jareceipt-/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f0f0f",
+  "theme_color": "#3498db",
+  "lang": "pt-BR",
+  "dir": "ltr"
+}
