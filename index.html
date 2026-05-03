@@ -21,9 +21,7 @@
             background: var(--bg-dark); color: white;
             font-family: 'Segoe UI', sans-serif;
         }
-
         body { display: flex; flex-direction: column; padding: 15px; box-sizing: border-box; }
-
         .settings-btn { position: fixed; top: 20px; right: 20px; font-size: 22px; color: var(--text-gray); cursor: pointer; z-index: 1001; transition: transform 0.3s; }
         .settings-btn:hover { transform: rotate(90deg); color: var(--gold); }
         
@@ -33,7 +31,6 @@
             border-radius: 12px; z-index: 1000; width: 280px; box-shadow: 0 10px 30px rgba(0,0,0,0.7);
         }
         .menu-flutuante a, .menu-item { display: block; padding: 14px; color: white; text-decoration: none; border-bottom: 1px solid #2a2a2a; font-size: 13px; cursor: pointer; }
-
         .app-header { text-align: center; margin: 15px 0; flex-shrink: 0; }
         .app-title { font-size: 32px; font-weight: 800; color: var(--main-blue); display: flex; align-items: center; justify-content: center; gap: 12px; }
         
@@ -41,13 +38,10 @@
         
         label { font-size: 11px; color: var(--text-gray); text-transform: uppercase; font-weight: 600; display: block; margin-bottom: 4px; }
         input, select { width: 100%; padding: 11px; margin-bottom: 8px; background: #252525; border: 1px solid #333; border-radius: 10px; color: white; box-sizing: border-box; font-size: 14px; }
-
         .btn-row { display: flex; gap: 12px; margin-top: 5px; }
         .btn { flex: 1; padding: 16px; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
         .btn-ws { background: #25d366; color: white; }
         .btn-rec { background: var(--main-blue); color: white; }
-
-        /* Estilo personalizado del botón de Logo */
         .file-upload-wrapper { position: relative; width: 100%; margin-top: 5px; }
         .custom-file-upload {
             display: flex; align-items: center; justify-content: center; gap: 10px;
@@ -55,28 +49,24 @@
             cursor: pointer; font-size: 13px; font-weight: bold; border: 1px solid rgba(255,255,255,0.1);
         }
         #inputLogo { display: none; }
-
         .ad-space-fijo { height: 50px; background: #000; border-top: 1px solid #333; margin: 10px -15px -15px -15px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
-
         #recibo-final, #historico-screen { 
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
             background: white; color: black; z-index: 2000; overflow-y: auto; padding: 30px; box-sizing: border-box;
         }
         #historico-screen { background: var(--bg-dark); color: white; }
 
-        /* CONFIGURACIÓN DE IMPRESIÓN - AQUÍ SE OCULTA EL BOTÓN AZUL */
         @media print {
             body, html { background: white !important; color: black !important; overflow: visible !important; height: auto !important; }
             body > *:not(#recibo-final) { display: none !important; }
             #recibo-final { display: block !important; position: static !important; width: 100% !important; margin: 0 !important; padding: 0 !important; box-shadow: none !important; }
-            .no-print { display: none !important; } /* Esto borra el botón del PDF */
+            .no-print { display: none !important; }
         }
     </style>
 </head>
 <body onclick="fecharMenu()">
     
     <i class="fas fa-cog settings-btn" onclick="toggleMenu(event)"></i>
-
     <div id="menu" class="menu-flutuante" onclick="event.stopPropagation()">
         <a href="https://docs.google.com/document/d/12PwE8n7WyRm1DFxLKub4a8YqVxI4m9MEXNQfEG6mVBs/edit?usp=drivesdk" target="_blank"><i class="fas fa-shield-alt"></i> Política de Privacidade</a>
         <div class="menu-item" onclick="abrirHistorico()"><i class="fas fa-history"></i> Histórico de Registros</div>
@@ -90,6 +80,7 @@
             <i class="fas fa-bolt" style="color: var(--gold); margin-right: 10px;"></i>já Receipt
         </div>
     </div>
+
     <div style="text-align: center; font-size: 10px; color: var(--text-gray); margin-bottom: 15px; margin-top: -5px; font-family: sans-serif; opacity: 0.8;">
         &copy; 2026 <span translate="no">Valencia Col</span> Innovative Solutions
     </div>
@@ -131,7 +122,6 @@
                 <select id="cMetodo"></select>
             </div>
         </div>
-
         <div class="btn-row">
             <button class="btn btn-ws" onclick="shareWS()"><i class="fab fa-whatsapp"></i> WhatsApp</button>
             <button class="btn btn-rec" onclick="generarDocumento()">GERAR PDF</button>
@@ -181,8 +171,8 @@
             NÃO É NOTA FISCAL. GERADO PELO APP JA RECEIPT.
         </div>
 
-        <!-- BOTÓN AZUL QUE SE OCULTA EN EL PDF -->
-        <button class="no-print" onclick="window.print()" style="width:100%; padding:15px; background:#3498db; color:white; border:none; border-radius:10px; font-weight:bold; margin-top:20px; cursor:pointer;">SALVAR / IMPRIMIR</button>
+        <!-- BOTÓN ACTUALIZADO PARA APK -->
+        <button class="no-print" onclick="lanzarImpresion()" style="width:100%; padding:15px; background:#3498db; color:white; border:none; border-radius:10px; font-weight:bold; margin-top:20px; cursor:pointer;">SALVAR / IMPRIMIR</button>
     </div>
 
     <div class="ad-space-fijo"><small style="color:#444; font-size:10px;">ANÚNCIO GOOGLE ADMOB</small></div>
@@ -200,6 +190,14 @@
         document.getElementById('pCPF').value = localStorage.getItem('pCPF') || '';
         actualizarMetodos();
         actualizarFolioPreview();
+    }
+
+    // FUNCIÓN DE IMPRESIÓN PARA APK
+    function lanzarImpresion() {
+        window.focus();
+        setTimeout(function() {
+            window.print();
+        }, 500);
     }
 
     function actualizarMetodos() {
@@ -247,16 +245,13 @@
         const s = document.getElementById('cServico').value;
         const n = document.getElementById('cNome').value || "Cliente General";
         if(!v || !s) return alert('Campos obrigatórios!');
-
         const folioActual = (localStorage.getItem('folio_cnt') || '1').padStart(3, '0');
         const fechaActual = new Date().toLocaleString();
         const monedaActual = document.getElementById('selectMoeda').value;
         const valorFormatado = formatearNumero(v);
-
         let hist = JSON.parse(localStorage.getItem('historico_recibos') || '[]');
         hist.unshift({ folio: folioActual, cliente: n, valor: valorFormatado, moneda: monedaActual, fecha: fechaActual, servicio: s });
         localStorage.setItem('historico_recibos', JSON.stringify(hist));
-
         document.getElementById('res-pNome').innerText = document.getElementById('pNome').value || 'USUÁRIO';
         document.getElementById('res-pCPF').innerText = document.getElementById('pCPF').value || '---';
         document.getElementById('res-cNome').innerText = n;
@@ -266,13 +261,10 @@
         document.getElementById('res-cMetodo').innerText = document.getElementById('cMetodo').value;
         document.getElementById('res-data').innerText = fechaActual;
         document.getElementById('res-nFolio').innerText = folioActual;
-
         localStorage.setItem('folio_cnt', (parseInt(folioActual) + 1).toString());
         actualizarFolioPreview();
-
         const logo = localStorage.getItem('userLogo');
         if(logo) { document.getElementById('res-logo').src = logo; document.getElementById('res-logo').style.display = 'block'; }
-
         document.getElementById('recibo-final').style.display = 'block';
     }
 
@@ -280,7 +272,6 @@
         const lista = document.getElementById('lista-historico');
         const hist = JSON.parse(localStorage.getItem('historico_recibos') || '[]');
         lista.innerHTML = hist.length ? '' : '<p style="text-align:center; color:gray; padding:20px;">Nenhum registro encontrado localmente.</p>';
-        
         hist.forEach((item, index) => {
             lista.innerHTML += `
                 <div class="hist-item" onclick="reconstruirRecibo(${index})" style="cursor:pointer; background:#1a1a1a; padding:15px; border-radius:10px; margin-bottom:10px; border-left:4px solid var(--main-blue);">
@@ -301,7 +292,6 @@
     function reconstruirRecibo(index) {
         const hist = JSON.parse(localStorage.getItem('historico_recibos') || '[]');
         const item = hist[index];
-
         document.getElementById('res-pNome').innerText = localStorage.getItem('pNome') || 'USUÁRIO';
         document.getElementById('res-pCPF').innerText = localStorage.getItem('pCPF') || '---';
         document.getElementById('res-cNome').innerText = item.cliente;
@@ -310,10 +300,8 @@
         document.getElementById('res-simbolo').innerText = item.moneda;
         document.getElementById('res-data').innerText = item.fecha;
         document.getElementById('res-nFolio').innerText = item.folio;
-
         const logo = localStorage.getItem('userLogo');
         if(logo) { document.getElementById('res-logo').src = logo; document.getElementById('res-logo').style.display = 'block'; }
-
         document.getElementById('recibo-final').style.display = 'block';
     }
 
