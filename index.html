@@ -53,10 +53,12 @@
 
         .ad-space-fijo { height: 50px; background: #000; border-top: 1px solid #333; margin: 10px -15px -15px -15px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
 
-        #recibo-final { 
+        #recibo-final, #historico-screen { 
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: white; color: black; z-index: 2000; overflow-y: auto; padding: 40px; box-sizing: border-box;
+            background: white; color: black; z-index: 2000; overflow-y: auto; padding: 30px; box-sizing: border-box;
         }
+
+        #historico-screen { background: var(--bg-dark); color: white; }
 
         @media print {
             body > *:not(#recibo-final) { display: none !important; }
@@ -71,10 +73,10 @@
 
     <div id="menu" class="menu-flutuante" onclick="event.stopPropagation()">
         <a href="https://docs.google.com/document/d/12PwE8n7WyRm1DFxLKub4a8YqVxI4m9MEXNQfEG6mVBs/edit?usp=drivesdk" target="_blank"><i class="fas fa-shield-alt"></i> Política de Privacidade</a>
-        <div class="menu-item" onclick="alert('Histórico em breve')"><i class="fas fa-history"></i> Histórico de Registros</div>
+        <div class="menu-item" onclick="abrirHistorico()"><i class="fas fa-history"></i> Histórico de Registros</div>
         <div class="menu-item" onclick="window.open('https://valenciacol.carrd.co/#historia', '_blank')"><i class="fas fa-rocket"></i> Nossa História</div>
         <div class="menu-item" onclick="window.open('https://valenciacol.carrd.co/', '_blank')"><i class="fas fa-store"></i> Mais Apps</div>
-        <div class="menu-item" onclick="localStorage.clear(); location.reload();" style="color:red;"><i class="fas fa-trash"></i> Limpar Tudo</div>
+        <div class="menu-item" onclick="limparTudo()" style="color:red;"><i class="fas fa-trash"></i> Limpar Tudo</div>
     </div>
 
     <div class="app-header">
@@ -92,10 +94,9 @@
             <span style="font-size: 10px; color: var(--gold); font-weight: bold;">PRÓX. FOLIO: <span id="nFolioPreview">001</span></span>
         </div>
         <input type="text" id="pNome" placeholder="Nome do Estabelecimento" oninput="salvarLocal()">
-        <input type="text" id="pCPF" placeholder="Identificação (NIT / CNPJ / ID)" oninput="salvarLocal()">
+        <input type="text" id="pCPF" placeholder="Identificación (NIT / CNPJ / ID)" oninput="salvarLocal()">
         
         <label>Logo da Empresa</label>
-        <!-- AJUSTE PARA MEDIAN: Sin el atributo 'capture' para activar galería -->
         <input type="file" id="inputLogo" accept="image/*" onchange="previewLogo(event)" style="font-size: 10px; border:none; background:transparent;">
     </div>
 
@@ -103,7 +104,7 @@
         <label>Detalhes do Registro</label>
         <input type="text" id="cServico" placeholder="Descrição do item">
         <input type="text" id="cNome" placeholder="Nome do Cliente / Identificación">
-        <input type="number" id="cValor" placeholder="0.00">
+        <input type="number" id="cValor" placeholder="0.00" step="0.01">
         <div style="display: flex; gap: 10px; margin-top: 5px;">
             <div style="flex: 1;">
                 <label>Moeda</label>
@@ -126,7 +127,13 @@
         </div>
     </div>
 
-    <div class="ad-space-fijo"><small style="color:#444; font-size:10px;">ANÚNCIO GOOGLE ADMOB</small></div>
+    <div id="historico-screen">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2 style="margin:0; color: var(--main-blue);">Histórico Local</h2>
+            <button onclick="document.getElementById('historico-screen').style.display='none'" style="background:none; border:none; color:white; font-size:24px; cursor:pointer;">&times;</button>
+        </div>
+        <div id="lista-historico"></div>
+    </div>
 
     <div id="recibo-final">
         <button class="no-print" onclick="document.getElementById('recibo-final').style.display='none'" style="float:right; border:none; background:none; font-size:24px; cursor:pointer;">&times;</button>
@@ -157,7 +164,7 @@
             <p style="font-size: 14px;"><b>CIDADE:</b> <span id="res-pCidade">Presidente Dutra</span></p>
             <p style="font-size: 14px;"><b>DATA:</b> <span id="res-data"></span></p>
         </div>
-        
+
         <div style="background: #f0f0f0; padding: 10px; font-size: 9px; color: #777; text-align: center; margin-top: 30px; border-radius: 4px;">
             ESTE DOCUMENTO DESTINA-SE EXCLUSIVAMENTE AO CONTROLE INTERNO (Art. 1º da Lei nº 8.137/90).<br>
             NÃO É NOTA FISCAL. GERADO PELO APP JA RECEIPT.
@@ -165,6 +172,8 @@
 
         <button class="no-print" onclick="window.print()" style="width:100%; padding:15px; background:#3498db; color:white; border:none; border-radius:10px; font-weight:bold; margin-top:20px; cursor:pointer;">SALVAR / IMPRIMIR</button>
     </div>
+
+    <div class="ad-space-fijo"><small style="color:#444; font-size:10px;">ANÚNCIO GOOGLE ADMOB</small></div>
 
 <script>
     const metodosPorMoneda = {
@@ -212,73 +221,106 @@
         document.getElementById('nFolioPreview').innerText = f.padStart(3, '0');
     }
 
+    function formatearNumero(valor) {
+        const monedaActual = document.getElementById('selectMoeda').value;
+        const formatos = { 'R$': 'pt-BR', '$': 'es-CO', 'US$': 'en-US', '€': 'de-DE' };
+        return new Intl.NumberFormat(formatos[monedaActual] || 'pt-BR', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }).format(valor);
+    }
+
     function generarDocumento() {
         const v = document.getElementById('cValor').value;
         const s = document.getElementById('cServico').value;
+        const n = document.getElementById('cNome').value || "Cliente General";
         if(!v || !s) return alert('Campos obrigatórios!');
+
+        const folioActual = (localStorage.getItem('folio_cnt') || '1').padStart(3, '0');
+        const fechaActual = new Date().toLocaleString();
+        const monedaActual = document.getElementById('selectMoeda').value;
+        const valorFormatado = formatearNumero(v);
+
+        let hist = JSON.parse(localStorage.getItem('historico_recibos') || '[]');
+        hist.unshift({ folio: folioActual, cliente: n, valor: valorFormatado, moneda: monedaActual, fecha: fechaActual, servicio: s });
+        localStorage.setItem('historico_recibos', JSON.stringify(hist));
 
         document.getElementById('res-pNome').innerText = document.getElementById('pNome').value || 'USUÁRIO';
         document.getElementById('res-pCPF').innerText = document.getElementById('pCPF').value || '---';
-        document.getElementById('res-cNome').innerText = document.getElementById('cNome').value || "Não especificado";
-
-        // CIUDAD POR DEFECTO ASEGURADA
-        const elCiudad = document.getElementById('res-pCidade');
-        if (elCiudad) { elCiudad.innerText = "Presidente Dutra"; }
-
-        const monedaActual = document.getElementById('selectMoeda').value;
-        const formatos = { 'R$': 'pt-BR', '$': 'es-CO', 'US$': 'en-US', '€': 'de-DE' };
-        const miConfig = formatos[monedaActual] || 'es-CO';
-
-        const valorFormateado = new Intl.NumberFormat(miConfig, {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-        }).format(v);
-
-        document.getElementById('res-cValor').innerText = valorFormateado;
+        document.getElementById('res-cNome').innerText = n;
+        document.getElementById('res-cValor').innerText = valorFormatado;
         document.getElementById('res-cServico').innerText = s;
         document.getElementById('res-simbolo').innerText = monedaActual;
         document.getElementById('res-cMetodo').innerText = document.getElementById('cMetodo').value;
-        document.getElementById('res-data').innerText = new Date().toLocaleString();
+        document.getElementById('res-data').innerText = fechaActual;
+        document.getElementById('res-nFolio').innerText = folioActual;
 
-        // GPS OPCIONAL
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(function(position) {
-                fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${position.coords.latitude}&lon=${position.coords.longitude}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        const ciudadGps = data.address.city || data.address.town || data.address.village;
-                        if (ciudadGps && elCiudad) { elCiudad.innerText = ciudadGps; }
-                    }).catch(err => console.log("Usando ciudad por defecto"));
-            });
-        }
-
-        const logo = localStorage.getItem('userLogo');
-        if(logo) { 
-            document.getElementById('res-logo').src = logo; 
-            document.getElementById('res-logo').style.display = 'block'; 
-        }
-
-        let f = parseInt(localStorage.getItem('folio_cnt') || '1');
-        document.getElementById('res-nFolio').innerText = f.toString().padStart(3, '0');
-        localStorage.setItem('folio_cnt', (f + 1).toString());
+        localStorage.setItem('folio_cnt', (parseInt(folioActual) + 1).toString());
         actualizarFolioPreview();
 
+        const logo = localStorage.getItem('userLogo');
+        if(logo) { document.getElementById('res-logo').src = logo; document.getElementById('res-logo').style.display = 'block'; }
+
         document.getElementById('recibo-final').style.display = 'block';
+    }
+
+    function abrirHistorico() {
+        const lista = document.getElementById('lista-historico');
+        const hist = JSON.parse(localStorage.getItem('historico_recibos') || '[]');
+        lista.innerHTML = hist.length ? '' : '<p style="text-align:center; color:gray; padding:20px;">Nenhum registro encontrado localmente.</p>';
+        
+        hist.forEach((item, index) => {
+            lista.innerHTML += `
+                <div class="hist-item" onclick="reconstruirRecibo(${index})" style="cursor:pointer; background:#1a1a1a; padding:15px; border-radius:10px; margin-bottom:10px; border-left:4px solid var(--main-blue);">
+                    <div style="display:flex; justify-content:space-between; font-weight:bold; color:var(--gold);">
+                        <span>Folio: ${item.folio}</span>
+                        <span>${item.moneda} ${item.valor}</span>
+                    </div>
+                    <div style="font-size:13px; margin-top:5px; color:white;"><b>Cliente:</b> ${item.cliente}</div>
+                    <div style="font-size:11px; color:gray; margin-top:3px;">${item.fecha}</div>
+                    <div style="font-size:10px; color:var(--main-blue); margin-top:5px; font-weight:bold;">TOQUE PARA VISUALIZAR</div>
+                </div>
+            `;
+        });
+        document.getElementById('historico-screen').style.display = 'block';
+        fecharMenu();
+    }
+
+    function reconstruirRecibo(index) {
+        const hist = JSON.parse(localStorage.getItem('historico_recibos') || '[]');
+        const item = hist[index];
+
+        document.getElementById('res-pNome').innerText = localStorage.getItem('pNome') || 'USUÁRIO';
+        document.getElementById('res-pCPF').innerText = localStorage.getItem('pCPF') || '---';
+        document.getElementById('res-cNome').innerText = item.cliente;
+        document.getElementById('res-cValor').innerText = item.valor;
+        document.getElementById('res-cServico').innerText = item.servicio;
+        document.getElementById('res-simbolo').innerText = item.moneda;
+        document.getElementById('res-data').innerText = item.fecha;
+        document.getElementById('res-nFolio').innerText = item.folio;
+
+        const logo = localStorage.getItem('userLogo');
+        if(logo) { document.getElementById('res-logo').src = logo; document.getElementById('res-logo').style.display = 'block'; }
+
+        document.getElementById('recibo-final').style.display = 'block';
+    }
+
+    function limparTudo() {
+        if(confirm("Deseja apagar todos os dados e o histórico?")) {
+            localStorage.clear();
+            location.reload();
+        }
     }
 
     function shareWS() {
         const v = document.getElementById('cValor').value;
         const s = document.getElementById('cServico').value;
-        const m = document.getElementById('selectMoeda').value;
-        if(!v) return alert('Por favor, ingrese un valor primero.');
-
-        const conf = { 'R$': 'pt-BR', '$': 'es-CO', 'US$': 'en-US', '€': 'de-DE' };
-        const estilo = conf[m] || 'es-CO';
-        const valorBonito = new Intl.NumberFormat(estilo, { minimumFractionDigits: 2 }).format(v);
-        const mensaje = encodeURIComponent(`Recibo ValenciaCol: ${s} - ${m} ${valorBonito}`);
+        if(!v) return alert('Valor vazio!');
+        const valorFormatado = formatearNumero(v);
+        const moneda = document.getElementById('selectMoeda').value;
+        const mensaje = encodeURIComponent(`Recibo ValenciaCol: ${s} - ${moneda} ${valorFormatado}`);
         window.open(`https://api.whatsapp.com/send?text=${mensaje}`, '_blank');
     }
 </script>
-<div class="ad-space-fijo"></div>
 </body>
 </html>
