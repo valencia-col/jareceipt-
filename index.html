@@ -102,14 +102,13 @@
         <input type="text" id="pNome" placeholder="Nome do Estabelecimento" oninput="salvarLocal()">
         <input type="text" id="pCPF" placeholder="Identificação (NIT / CNPJ / ID)" oninput="salvarLocal()">
         
-        <label>Logo da Empresa</label>
-    <!-- Eliminamos 'capture' para que Android te deje elegir entre Galería o Archivos -->
 <!-- Este es el botón que el usuario ve -->
 <button type="button" onclick="document.getElementById('logotipo').click()" style="background-color: #6200ee; color: white; padding: 10px; border-radius: 5px;">
     Seleccionar Logotipo
 </button>
 
 <!-- Este es el código oculto que realmente hace el trabajo -->
+<!-- IMPORTANTE: Sin 'capture' para que abra la galería -->
 <input type="file" id="logotipo" name="logotipo" accept="image/*" style="display: none;" onchange="previewImage(event)">
     <!-- SECCIÓN REGISTRO -->
     <div class="card">
