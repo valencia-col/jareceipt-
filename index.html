@@ -310,5 +310,26 @@
 <div class="ad-space-fijo">
     <!-- Aquí es donde Median o AdMob insertarán el banner -->
 </div>
+        <script>
+document.addEventListener("DOMContentLoaded", function() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(position) {
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
+            
+            // Usamos una API gratuita para convertir coordenadas en Ciudad
+            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
+                .then(response => response.json())
+                .then(data => {
+                    const ciudad = data.address.city || data.address.town || data.address.village;
+                    if (ciudad) {
+                        // Supongamos que tu campo de ciudad tiene el id "ciudad"
+                        document.getElementById('ciudad').value = ciudad;
+                    }
+                });
+        });
+    }
+});
+</script>
 </body>
 </html>
