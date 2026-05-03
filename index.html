@@ -104,8 +104,13 @@
         
         <label>Logo da Empresa</label>
     <!-- Eliminamos 'capture' para que Android te deje elegir entre Galería o Archivos -->
-<input type="file" id="logotipo" name="logotipo" accept="image/*" style="display: none;" onchange="previewImage(event)">
+<!-- Este es el botón que el usuario ve -->
+<button type="button" onclick="document.getElementById('logotipo').click()" style="background-color: #6200ee; color: white; padding: 10px; border-radius: 5px;">
+    Seleccionar Logotipo
+</button>
 
+<!-- Este es el código oculto que realmente hace el trabajo -->
+<input type="file" id="logotipo" name="logotipo" accept="image/*" style="display: none;" onchange="previewImage(event)">
     <!-- SECCIÓN REGISTRO -->
     <div class="card">
         <label>Detalhes do Registro</label>
