@@ -6,6 +6,7 @@
     <title class="notranslate" translate="no">já Receipt - Valencia Col</title> 
     <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         :root {
             --bg-dark: #0f0f0f;
@@ -171,12 +172,12 @@
             NÃO É NOTA FISCAL. GERADO PELO APP JA RECEIPT.
         </div>
 
-        <!-- BOTÓN ACTUALIZADO PARA APK -->
         <button class="no-print" onclick="lanzarImpresion()" style="width:100%; padding:15px; background:#3498db; color:white; border:none; border-radius:10px; font-weight:bold; margin-top:20px; cursor:pointer;">SALVAR / IMPRIMIR</button>
     </div>
 
     <div class="ad-space-fijo"><small style="color:#444; font-size:10px;">ANÚNCIO GOOGLE ADMOB</small></div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script>
     const metodosPorMoneda = {
         'R$': ['Dinheiro', 'Pix', 'Cartão', 'Transferência'],
@@ -192,12 +193,32 @@
         actualizarFolioPreview();
     }
 
-    // FUNCIÓN DE IMPRESIÓN PARA APK
+    // ESTA ES LA FUNCIÓN QUE GENERA EL PDF REAL
     function lanzarImpresion() {
-        window.focus();
-        setTimeout(function() {
-            window.print();
-        }, 500);
+        const elemento = document.getElementById('recibo-final');
+        const folio = document.getElementById('res-nFolio').innerText;
+
+        // Configuramos el PDF para que sea profesional
+        const opciones = {
+            margin: 10,
+            filename: 'Recibo_' + folio + '.pdf',
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        // Ocultamos botones para que no salgan en el PDF
+        const botones = document.querySelectorAll('.no-print');
+        botones.forEach(b => b.style.display = 'none');
+
+        // Generar y Guardar
+        html2pdf().set(opciones).from(elemento).save().then(() => {
+            botones.forEach(b => b.style.display = 'block');
+            alert("PDF Guardado en Descargas");
+        }).catch(err => {
+            alert("Error: " + err);
+            botones.forEach(b => b.style.display = 'block');
+        });
     }
 
     function actualizarMetodos() {
@@ -306,7 +327,7 @@
     }
 
     function limparTudo() {
-        if(confirm("Deseja apagar todos os dados e o histórico?")) {
+        if(confirm("Deseja apagar todos os datos e o histórico?")) {
             localStorage.clear();
             location.reload();
         }
