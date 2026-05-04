@@ -5,8 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title class="notranslate" translate="no">já Receipt - Valencia Col</title> 
     <link rel="manifest" href="manifest.json">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.mi">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
     <style>
         :root {
             --bg-dark: #0f0f0f;
@@ -23,15 +24,20 @@
             font-family: 'Segoe UI', sans-serif;
         }
         body { display: flex; flex-direction: column; padding: 15px; box-sizing: border-box; }
-        .settings-btn { position: fixed; top: 20px; right: 20px; font-size: 22px; color: var(--text-gray); cursor: pointer; z-index: 1001; transition: transform 0.3s; }
-        .settings-btn:hover { transform: rotate(90deg); color: var(--gold); }
         
+        .settings-btn { 
+            position: fixed; top: 20px; right: 20px; 
+            font-size: 24px; color: var(--gold) !important; 
+            cursor: pointer; z-index: 1001; 
+        }
+
         .menu-flutuante {
             display: none; position: fixed; top: 60px; right: 20px; 
             background: var(--card-dark); border: 1px solid #333;
             border-radius: 12px; z-index: 1000; width: 280px; box-shadow: 0 10px 30px rgba(0,0,0,0.7);
         }
         .menu-flutuante a, .menu-item { display: block; padding: 14px; color: white; text-decoration: none; border-bottom: 1px solid #2a2a2a; font-size: 13px; cursor: pointer; }
+        
         .app-header { text-align: center; margin: 15px 0; flex-shrink: 0; }
         .app-title { font-size: 32px; font-weight: 800; color: var(--main-blue); display: flex; align-items: center; justify-content: center; gap: 12px; }
         
@@ -43,31 +49,38 @@
         .btn { flex: 1; padding: 16px; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
         .btn-ws { background: #25d366; color: white; }
         .btn-rec { background: var(--main-blue); color: white; }
-        .file-upload-wrapper { position: relative; width: 100%; margin-top: 5px; }
+        
+        #inputLogo { display: none; }
         .custom-file-upload {
             display: flex; align-items: center; justify-content: center; gap: 10px;
             background: var(--main-blue); color: white; padding: 12px; border-radius: 10px;
-            cursor: pointer; font-size: 13px; font-weight: bold; border: 1px solid rgba(255,255,255,0.1);
+            cursor: pointer; font-size: 13px; font-weight: bold;
         }
-        #inputLogo { display: none; }
-        .ad-space-fijo { height: 50px; background: #000; border-top: 1px solid #333; margin: 10px -15px -15px -15px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
-        #recibo-final, #historico-screen { 
+
+        /* RECIBO: Blanco puro para evitar PDF vacío */
+        #recibo-final { 
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: white; color: black; z-index: 2000; overflow-y: auto; padding: 30px; box-sizing: border-box;
+            background: #ffffff !important; color: #000000 !important; z-index: 2000; overflow-y: auto; padding: 30px; box-sizing: border-box;
         }
-        #historico-screen { background: var(--bg-dark); color: white; }
+        #recibo-final * { color: #000000 !important; }
+
+        #historico-screen { 
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: var(--bg-dark); color: white; z-index: 2000; overflow-y: auto; padding: 30px; box-sizing: border-box;
+        }
+
+        .ad-space-fijo { height: 50px; background: #000; border-top: 1px solid #333; margin: 10px -15px -15px -15px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
 
         @media print {
-            body, html { background: white !important; color: black !important; overflow: visible !important; height: auto !important; }
-            body > *:not(#recibo-final) { display: none !important; }
-            #recibo-final { display: block !important; position: static !important; width: 100% !important; margin: 0 !important; padding: 0 !important; box-shadow: none !important; }
             .no-print { display: none !important; }
+            #recibo-final { display: block !important; position: static !important; }
         }
     </style>
 </head>
 <body onclick="fecharMenu()">
     
     <i class="fas fa-cog settings-btn" onclick="toggleMenu(event)"></i>
+
     <div id="menu" class="menu-flutuante" onclick="event.stopPropagation()">
         <a href="https://docs.google.com/document/d/12PwE8n7WyRm1DFxLKub4a8YqVxI4m9MEXNQfEG6mVBs/edit?usp=drivesdk" target="_blank"><i class="fas fa-shield-alt"></i> Política de Privacidade</a>
         <div class="menu-item" onclick="abrirHistorico()"><i class="fas fa-history"></i> Histórico de Registros</div>
@@ -78,11 +91,11 @@
 
     <div class="app-header">
         <div class="app-title notranslate" translate="no">
-            <i class="fas fa-bolt" style="color: var(--gold); margin-right: 10px;"></i>já Receipt
+            <i class="fas fa-bolt" style="color: var(--gold);"></i> já Receipt
         </div>
     </div>
 
-    <div style="text-align: center; font-size: 10px; color: var(--text-gray); margin-bottom: 15px; margin-top: -5px; font-family: sans-serif; opacity: 0.8;">
+    <div style="text-align: center; font-size: 10px; color: var(--text-gray); margin-bottom: 15px; margin-top: -5px; opacity: 0.8;">
         &copy; 2026 <span translate="no">Valencia Col</span> Innovative Solutions
     </div>
 
@@ -132,52 +145,53 @@
     <div id="historico-screen">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
             <h2 style="margin:0; color: var(--main-blue);">Histórico Local</h2>
-            <button onclick="document.getElementById('historico-screen').style.display='none'" style="background:none; border:none; color:white; font-size:24px; cursor:pointer;">&times;</button>
+            <button onclick="document.getElementById('historico-screen').style.display='none'" style="background:none; border:none; color:white; font-size:24px;">&times;</button>
         </div>
         <div id="lista-historico"></div>
     </div>
 
     <div id="recibo-final">
-        <button class="no-print" onclick="document.getElementById('recibo-final').style.display='none'" style="float:right; border:none; background:none; font-size:24px; cursor:pointer;">&times;</button>
+        <button class="no-print" onclick="document.getElementById('recibo-final').style.display='none'" style="float:right; border:none; background:none; font-size:24px;">&times;</button>
         
-        <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 15px; margin-bottom: 25px;">
-            <img id="res-logo" src="" style="max-height: 70px; display:none; margin: 0 auto 10px;">
-            <h2 style="margin:0; letter-spacing: 2px;">RECIBO DE PAGAMENTO</h2>
-            <small>Controle Interno • <span translate="no">Valencia Col</span> Innovative Solutions</small>
-        </div>
-
-        <div style="font-size: 14px;">
-            <div style="display: flex; justify-content: space-between;">
-                <span><b>EMISSOR:</b> <span id="res-pNome" style="text-transform: uppercase;"></span></span>
-                <span style="font-weight: bold; color: #d4af37;">Folio: <span id="res-nFolio">000</span></span>
+        <div id="pdf-content">
+            <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 15px; margin-bottom: 25px;">
+                <img id="res-logo" src="" style="max-height: 70px; display:none; margin: 0 auto 10px;">
+                <h2 style="margin:0; letter-spacing: 2px; color: black !important;">RECIBO DE PAGAMENTO</h2>
+                <small style="color: black !important;">Controle Interno • Valencia Col Innovative Solutions</small>
             </div>
-            <p><b>IDENTIFICAÇÃO:</b> <span id="res-pCPF"></span></p>
-            <p>Recebi de <b><span id="res-cNome"></span></b> a importancia de:</p>
-            
-            <div style="text-align:center; border: 2px solid #000; padding: 20px; margin: 20px 0; background: #f9f9f9;">
-                <h1 style="margin: 0; font-size: 34px;"><span id="res-simbolo"></span> <span id="res-cValor"></span></h1>
+
+            <div style="font-size: 14px; color: black !important;">
+                <div style="display: flex; justify-content: space-between;">
+                    <span><b style="color: black !important;">EMISSOR:</b> <span id="res-pNome" style="text-transform: uppercase; color: black !important;"></span></span>
+                    <span style="font-weight: bold; color: #000 !important;">Folio: <span id="res-nFolio">000</span></span>
+                </div>
+                <p><b style="color: black !important;">IDENTIFICAÇÃO:</b> <span id="res-pCPF" style="color: black !important;"></span></p>
+                <p style="color: black !important;">Recebi de <b style="color: black !important;"><span id="res-cNome"></span></b> a importancia de:</p>
+                
+                <div style="text-align:center; border: 2px solid #000; padding: 20px; margin: 20px 0; background: #f9f9f9;">
+                    <h1 style="margin: 0; font-size: 34px; color: black !important;"><span id="res-simbolo"></span> <span id="res-cValor"></span></h1>
+                </div>
+                
+                <p><b style="color: black !important;">REFERENTE A:</b> <span id="res-cServico" style="color: black !important;"></span></p>
+                <p><b style="color: black !important;">FORMA DE PAGAMENTO:</b> <span id="res-cMetodo" style="color: black !important;"></span></p>
             </div>
-            
-            <p><b>REFERENTE A:</b> <span id="res-cServico"></span></p>
-            <p><b>FORMA DE PAGAMENTO:</b> <span id="res-cMetodo"></span></p>
+
+            <div style="display: flex; justify-content: space-between; margin-top: 40px; color: black !important;">
+                <p style="font-size: 14px;"><b style="color: black !important;">CIDADE:</b> Presidente Dutra</p>
+                <p style="font-size: 14px;"><b style="color: black !important;">DATA:</b> <span id="res-data"></span></p>
+            </div>
+
+            <div style="background: #f0f0f0; padding: 10px; font-size: 9px; color: #000 !important; text-align: center; margin-top: 30px; border-radius: 4px;">
+                ESTE DOCUMENTO DESTINA-SE EXCLUSIVAMENTE AO CONTROLE INTERNO.<br>
+                NÃO É NOTA FISCAL. GERADO PELO APP JA RECEIPT.
+            </div>
         </div>
 
-        <div style="display: flex; justify-content: space-between; margin-top: 40px;">
-            <p style="font-size: 14px;"><b>CIDADE:</b> <span id="res-pCidade">Presidente Dutra</span></p>
-            <p style="font-size: 14px;"><b>DATA:</b> <span id="res-data"></span></p>
-        </div>
-
-        <div style="background: #f0f0f0; padding: 10px; font-size: 9px; color: #777; text-align: center; margin-top: 30px; border-radius: 4px;">
-            ESTE DOCUMENTO DESTINA-SE EXCLUSIVAMENTE AO CONTROLE INTERNO (Art. 1º da Lei nº 8.137/90).<br>
-            NÃO É NOTA FISCAL. GERADO PELO APP JA RECEIPT.
-        </div>
-
-        <button class="no-print" onclick="lanzarImpresion()" style="width:100%; padding:15px; background:#3498db; color:white; border:none; border-radius:10px; font-weight:bold; margin-top:20px; cursor:pointer;">SALVAR / IMPRIMIR</button>
+        <button class="no-print" onclick="lanzarImpresion()" style="width:100%; padding:15px; background:#3498db; color:white; border:none; border-radius:10px; font-weight:bold; margin-top:20px;">SALVAR / IMPRIMIR</button>
     </div>
 
     <div class="ad-space-fijo"><small style="color:#444; font-size:10px;">ANÚNCIO GOOGLE ADMOB</small></div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script>
     const metodosPorMoneda = {
         'R$': ['Dinheiro', 'Pix', 'Cartão', 'Transferência'],
@@ -193,32 +207,36 @@
         actualizarFolioPreview();
     }
 
-    // ESTA ES LA FUNCIÓN QUE GENERA EL PDF REAL
+    // CORRECCIÓN: Espera activa para evitar PDF en blanco
     function lanzarImpresion() {
-        const elemento = document.getElementById('recibo-final');
+        const elemento = document.getElementById('pdf-content');
         const folio = document.getElementById('res-nFolio').innerText;
+        const botones = document.querySelectorAll('.no-print');
+        
+        botones.forEach(b => b.style.display = 'none');
 
-        // Configuramos el PDF para que sea profesional
         const opciones = {
             margin: 10,
             filename: 'Recibo_' + folio + '.pdf',
             image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2, useCORS: true },
+            html2canvas: { 
+                scale: 2, 
+                useCORS: true, 
+                backgroundColor: '#ffffff',
+                logging: false
+            },
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
         };
 
-        // Ocultamos botones para que no salgan en el PDF
-        const botones = document.querySelectorAll('.no-print');
-        botones.forEach(b => b.style.display = 'none');
-
-        // Generar y Guardar
-        html2pdf().set(opciones).from(elemento).save().then(() => {
-            botones.forEach(b => b.style.display = 'block');
-            alert("PDF Guardado en Descargas");
-        }).catch(err => {
-            alert("Error: " + err);
-            botones.forEach(b => b.style.display = 'block');
-        });
+        // Pequeño retraso de 300ms para asegurar que el DOM esté listo
+        setTimeout(() => {
+            html2pdf().set(opciones).from(elemento).save().then(() => {
+                botones.forEach(b => b.style.display = 'block');
+            }).catch(err => {
+                alert("Erro: " + err);
+                botones.forEach(b => b.style.display = 'block');
+            });
+        }, 300);
     }
 
     function actualizarMetodos() {
@@ -246,7 +264,6 @@
 
     function toggleMenu(e) { e.stopPropagation(); const m = document.getElementById('menu'); m.style.display = (m.style.display === 'block') ? 'none' : 'block'; }
     function fecharMenu() { document.getElementById('menu').style.display = 'none'; }
-
     function actualizarFolioPreview() {
         let f = localStorage.getItem('folio_cnt') || '1';
         document.getElementById('nFolioPreview').innerText = f.padStart(3, '0');
@@ -256,8 +273,7 @@
         const monedaActual = document.getElementById('selectMoeda').value;
         const formatos = { 'R$': 'pt-BR', '$': 'es-CO', 'US$': 'en-US', '€': 'de-DE' };
         return new Intl.NumberFormat(formatos[monedaActual] || 'pt-BR', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
+            minimumFractionDigits: 2, maximumFractionDigits: 2
         }).format(valor);
     }
 
@@ -266,13 +282,16 @@
         const s = document.getElementById('cServico').value;
         const n = document.getElementById('cNome').value || "Cliente General";
         if(!v || !s) return alert('Campos obrigatórios!');
+
         const folioActual = (localStorage.getItem('folio_cnt') || '1').padStart(3, '0');
         const fechaActual = new Date().toLocaleString();
         const monedaActual = document.getElementById('selectMoeda').value;
         const valorFormatado = formatearNumero(v);
+
         let hist = JSON.parse(localStorage.getItem('historico_recibos') || '[]');
         hist.unshift({ folio: folioActual, cliente: n, valor: valorFormatado, moneda: monedaActual, fecha: fechaActual, servicio: s });
         localStorage.setItem('historico_recibos', JSON.stringify(hist));
+
         document.getElementById('res-pNome').innerText = document.getElementById('pNome').value || 'USUÁRIO';
         document.getElementById('res-pCPF').innerText = document.getElementById('pCPF').value || '---';
         document.getElementById('res-cNome').innerText = n;
@@ -282,10 +301,13 @@
         document.getElementById('res-cMetodo').innerText = document.getElementById('cMetodo').value;
         document.getElementById('res-data').innerText = fechaActual;
         document.getElementById('res-nFolio').innerText = folioActual;
+
         localStorage.setItem('folio_cnt', (parseInt(folioActual) + 1).toString());
         actualizarFolioPreview();
+
         const logo = localStorage.getItem('userLogo');
         if(logo) { document.getElementById('res-logo').src = logo; document.getElementById('res-logo').style.display = 'block'; }
+        
         document.getElementById('recibo-final').style.display = 'block';
     }
 
@@ -295,16 +317,13 @@
         lista.innerHTML = hist.length ? '' : '<p style="text-align:center; color:gray; padding:20px;">Nenhum registro encontrado localmente.</p>';
         hist.forEach((item, index) => {
             lista.innerHTML += `
-                <div class="hist-item" onclick="reconstruirRecibo(${index})" style="cursor:pointer; background:#1a1a1a; padding:15px; border-radius:10px; margin-bottom:10px; border-left:4px solid var(--main-blue);">
+                <div class="hist-item" onclick="reconstruirRecibo(${index})" style="background:#1a1a1a; padding:15px; border-radius:10px; margin-bottom:10px; border-left:4px solid var(--main-blue);">
                     <div style="display:flex; justify-content:space-between; font-weight:bold; color:var(--gold);">
                         <span>Folio: ${item.folio}</span>
                         <span>${item.moneda} ${item.valor}</span>
                     </div>
                     <div style="font-size:13px; margin-top:5px; color:white;"><b>Cliente:</b> ${item.cliente}</div>
-                    <div style="font-size:11px; color:gray; margin-top:3px;">${item.fecha}</div>
-                    <div style="font-size:10px; color:var(--main-blue); margin-top:5px; font-weight:bold;">TOQUE PARA VISUALIZAR</div>
-                </div>
-            `;
+                </div>`;
         });
         document.getElementById('historico-screen').style.display = 'block';
         fecharMenu();
@@ -321,13 +340,11 @@
         document.getElementById('res-simbolo').innerText = item.moneda;
         document.getElementById('res-data').innerText = item.fecha;
         document.getElementById('res-nFolio').innerText = item.folio;
-        const logo = localStorage.getItem('userLogo');
-        if(logo) { document.getElementById('res-logo').src = logo; document.getElementById('res-logo').style.display = 'block'; }
         document.getElementById('recibo-final').style.display = 'block';
     }
 
     function limparTudo() {
-        if(confirm("Deseja apagar todos os datos e o histórico?")) {
+        if(confirm("Deseja apagar todos os dados e o histórico?")) {
             localStorage.clear();
             location.reload();
         }
