@@ -178,14 +178,16 @@
     </div>
 
 <script>
-    // PARCHE DE NAVEGACIÓN PARA MEDIAN (Evita que salte al navegador)
     document.addEventListener('click', function(e) {
-        let target = e.target.closest('a');
-        if (target && target.href && target.href.startsWith('http')) {
+    let t = e.target.closest('a');
+    if (t && t.href) {
+        // Si el link NO es de tu github, mándalo afuera de la app a la fuerza
+        if (!t.href.includes('valencia-col.github.io')) {
             e.preventDefault();
-            window.location.href = target.href;
+            window.open(t.href, '_system'); 
         }
-    }, false);
+    }
+}, true);
 
     const metodosPorMoneda = {
         'R$': ['Dinheiro', 'Pix', 'Cartão', 'Transferência'],
