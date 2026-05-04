@@ -202,22 +202,22 @@
     }
 
     function lanzarImpresion() {
-        const elemento = document.getElementById('pdf-content');
-        const folio = document.getElementById('res-nFolio').innerText;
-        const botones = document.querySelectorAll('.no-print');
-        botones.forEach(b => b.style.display = 'none');
-        const opciones = {
-            margin: 10, filename: 'Recibo_' + folio + '.pdf', image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-        };
-        setTimeout(() => {
-            html2pdf().set(opciones).from(elemento).save().then(() => {
-                botones.forEach(b => b.style.display = 'block');
-            });
-        }, 500);
-    }
+    const elemento = document.getElementById('pdf-content');
+    const folio = document.getElementById('res-nFolio').innerText;
+    // Creamos el nombre aquí para que sea dinámico según el folio
+    const nombreFinal = 'Recibo_ValenciaCol_' + folio + '.pdf'; 
 
+    const opciones = {
+        margin: 10,
+        filename: nombreFinal,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+
+    // Esta es la parte que "amarra" el nombre para que no salga como Download.pdf
+    html2pdf().set(opciones).from(elemento).save(nombreFinal);
+    }
     function actualizarMetodos() {
         const moneda = document.getElementById('selectMoeda').value;
         const comboMetodo = document.getElementById('cMetodo');
