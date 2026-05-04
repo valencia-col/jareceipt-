@@ -77,13 +77,31 @@
     <i class="fas fa-cog settings-btn" onclick="toggleMenu(event)"></i>
 
     <div id="menu" class="menu-flutuante" onclick="event.stopPropagation()">
-        <a href="https://docs.google.com/document/d/12PwE8n7WyRm1DFxLKub4a8YqVxI4m9MEXNQfEG6mVBs/edit?usp=drivesdk" target="_blank"><i class="fas fa-shield-alt"></i> Política de Privacidade</a>
-        <div class="menu-item" onclick="abrirHistorico()"><i class="fas fa-history"></i> Histórico de Registros</div>
-        <div class="menu-item" onclick="window.open('https://valenciacol.carrd.co/#historia', '_blank')"><i class="fas fa-rocket"></i> Nossa História</div>
-        <div class="menu-item" onclick="window.open('https://valenciacol.carrd.co/', '_blank')"><i class="fas fa-store"></i> Mais Apps</div>
-        <div class="menu-item" onclick="limparTudo()" style="color:red;"><i class="fas fa-trash"></i> Limpar Tudo</div>
+    <!-- Abre la Política en Chrome -->
+    <div class="menu-item" onclick="window.open('https://docs.google.com/document/d/12PwE8n7WyRm1DFxLKub4a8YqVxI4m9MEXNQfEG6mVBs/edit?usp=drivesdk', '_blank')">
+        <i class="fas fa-shield-alt"></i> Política de Privacidade
     </div>
 
+    <!-- Historial de registros (Se queda dentro de la app porque es interno) -->
+    <div class="menu-item" onclick="abrirHistorico()">
+        <i class="fas fa-history"></i> Histórico de Registros
+    </div>
+
+    <!-- Abre en Nossa História en el título exacto en Chrome -->
+    <div class="menu-item" onclick="window.open('https://valenciacol.carrd.co/#historia', '_blank')">
+        <i class="fas fa-rocket"></i> Nossa História
+    </div>
+
+    <!-- Abre en Mais Apps en el título exacto (#work) en Chrome -->
+    <div class="menu-item" onclick="window.open('https://valenciacol.carrd.co/#work', '_blank')">
+        <i class="fas fa-store"></i> Mais Apps
+    </div>
+
+    <!-- Botón para limpiar datos -->
+    <div class="menu-item" onclick="limparTudo()" style="color:red;">
+        <i class="fas fa-trash"></i> Limpar Tudo
+    </div>
+    </div>
     <div class="app-header">
         <div class="app-title notranslate" translate="no">
             <i class="fas fa-bolt" style="color: var(--gold);"></i> já Receipt
