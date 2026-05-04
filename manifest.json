@@ -17,6 +17,7 @@
     }
   ],
   "start_url": "/jareceipt-/",
+  "scope": "/jareceipt-/",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#0f0f0f",
