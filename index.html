@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title class="notranslate" translate="no">já Receipt - Valencia Col</title> 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
     <style>
         :root { --b:#0f0f0f; --c:#1a1a1a; --m:#3498db; --g:#f1c40f; --t:#ffffff; --ok:#27ae60; }
@@ -23,7 +24,6 @@
         .v-card{background:var(--c);padding:18px;border-radius:20px;border:1px solid #2a2a2a;margin-bottom:12px;display:flex;flex-direction:column;gap:8px;}
         input,select{width:100%;padding:12px;background:#252525;border:1px solid #333;border-radius:10px;color:white;font-size:14px;box-sizing:border-box;}
         
-        /* BOTON LOGO - INICIA AZUL SIEMPRE */
         .v-upload{background:var(--m);color:white!important;padding:14px;border-radius:12px;cursor:pointer;font-size:13px;font-weight:bold;text-align:center;display:block;transition:all 0.4s ease;}
         .v-success{background:var(--ok)!important;box-shadow: 0 0 15px var(--ok);}
 
@@ -31,9 +31,18 @@
 
         #v-screen{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:white;z-index:2000;overflow-y:auto;padding:20px;box-sizing:border-box;}
         .v-toolbar{display:flex;justify-content:flex-end;gap:35px;margin-bottom:20px;}
+        .v-toolbar i{cursor:pointer;transition:transform 0.2s;}
+        .v-toolbar i:active{transform:scale(0.9);}
         .v-val-box{position:relative;text-align:center;border:2px solid #000;padding:25px;margin:20px 0;background:#f9f9f9;}
         .v-val-txt{font-size:38px;margin:0;font-weight:900;color:black;z-index:2;position:relative;}
         .v-mark{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-15deg);font-size:50px;color:rgba(0,0,0,0.06);font-weight:900;}
+        
+        .loading-spinner{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.9);padding:25px 35px;border-radius:20px;z-index:9999;display:none;align-items:center;gap:15px;flex-direction:column;}
+        .loading-spinner i{font-size:40px;color:var(--g);animation:spin 1s linear infinite;}
+        .loading-spinner span{color:white;font-size:14px;font-weight:bold;}
+        @keyframes spin{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
+        
+        .whatsapp-btn{background:#25d366;color:white;border-radius:50px;padding:12px 20px;display:inline-flex;align-items:center;gap:10px;font-weight:bold;}
     </style>
 </head>
 <body onclick="v_hide_m()">
@@ -78,12 +87,13 @@
             </select>
             <select id="v-met" style="flex:1;"></select>
         </div>
-        <button class="v-btn" onclick="v_generate_now()">GERAR RECIBO</button>
+        <button class="v-btn" onclick="v_generate_and_share()">GERAR RECIBO</button>
     </div>
 
     <div id="v-screen">
         <div class="v-toolbar">
-            <i class="fas fa-share-nodes" onclick="v_whatsapp_share()" style="font-size:40px;color:#25d366;cursor:pointer;"></i>
+            <i class="fab fa-whatsapp" onclick="v_enviar_whatsapp_directo()" style="font-size:40px;color:#25d366;cursor:pointer;"></i>
+            <i class="fas fa-download" onclick="v_descargar_pdf()" style="font-size:40px;color:#3498db;cursor:pointer;"></i>
             <i class="fas fa-times" onclick="document.getElementById('v-screen').style.display='none'" style="font-size:40px;color:black;cursor:pointer;"></i>
         </div>
         <div id="v-print-area" style="color:black!important;padding:20px;background:white;">
@@ -105,6 +115,11 @@
                 <b>Local:</b> <span id="r-lo">Brasil</span> | <span id="r-da"></span>
             </p>
         </div>
+    </div>
+
+    <div class="loading-spinner" id="loadingSpinner">
+        <i class="fab fa-whatsapp"></i>
+        <span>Preparando imagen para WhatsApp...</span>
     </div>
 
 <script>
@@ -143,40 +158,150 @@
 
     async function v_start_geo(){
         if(navigator.geolocation) navigator.geolocation.getCurrentPosition(async(p)=>{
-            const res=await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${p.coords.latitude}&lon=${p.coords.longitude}&format=json`);
-            const data=await res.json(); document.getElementById('r-lo').innerText=data.address.city||data.address.town||"Brasil";
+            try {
+                const res=await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${p.coords.latitude}&lon=${p.coords.longitude}&format=json`);
+                const data=await res.json(); document.getElementById('r-lo').innerText=data.address.city||data.address.town||"Brasil";
+            } catch(e){}
         });
     }
 
-    function v_generate_now(){
-        const val=document.getElementById('v-amo').value; if(!val) return alert("Ingrese el valor");
+    async function v_generate_and_share(){
+        const val=document.getElementById('v-amo').value; 
+        if(!val || val <= 0) return alert("Ingrese el valor válido");
+        
         const f=(localStorage.getItem('v_folio_num')||'1').padStart(3,'0');
-        document.getElementById('r-em').innerText=document.getElementById('v-em').value.toUpperCase();
-        document.getElementById('r-id').innerText=document.getElementById('v-id').value;
+        document.getElementById('r-em').innerText=document.getElementById('v-em').value.toUpperCase() || "EMPRESA";
+        document.getElementById('r-id').innerText=document.getElementById('v-id').value || "N/A";
         document.getElementById('r-cl').innerText=document.getElementById('v-cli').value || "Público General";
         document.getElementById('r-va').innerText=parseFloat(val).toLocaleString('de-DE',{minimumFractionDigits:2});
-        document.getElementById('r-co').innerText=document.getElementById('v-con').value;
+        document.getElementById('r-co').innerText=document.getElementById('v-con').value || "Sin concepto";
         document.getElementById('r-sy').innerText=document.getElementById('v-cur').value;
         document.getElementById('r-me').innerText=document.getElementById('v-met').value;
         document.getElementById('r-fo').innerText=f;
         document.getElementById('r-da').innerText=new Date().toLocaleString();
-        const logo=localStorage.getItem('v_saved_logo'); if(logo){const i=document.getElementById('v-res-logo');i.src=logo;i.style.display='block';}
+        
+        const logo=localStorage.getItem('v_saved_logo'); 
+        const i=document.getElementById('v-res-logo');
+        if(logo){ i.src=logo; i.style.display='block'; } else { i.style.display='none'; }
+        
         localStorage.setItem('v_folio_num',parseInt(f)+1);
+        
         document.getElementById('v-screen').style.display='block';
     }
 
-    async function v_whatsapp_share(){
-        const area=document.getElementById('v-print-area');
-        const canvas=await html2canvas(area,{scale:3});
-        canvas.toBlob(async(blob)=>{
-            const file=new File([blob],`Recibo_ValenciaCol.png`,{type:'image/png'});
-            if(navigator.canShare && navigator.canShare({files:[file]})){
-                await navigator.share({files:[file],title:'Recibo',text:'Comprobante de Pago'});
-            }else{ alert("Botón compartido solo disponible en celulares."); }
-        });
+    // FUNCIÓN PRINCIPAL: Enviar DIRECTAMENTE a WhatsApp la imagen
+    async function v_enviar_whatsapp_directo() {
+        const area = document.getElementById('v-print-area');
+        const folio = document.getElementById('r-fo').innerText;
+        const cliente = document.getElementById('r-cl').innerText;
+        const montoSimbolo = document.getElementById('r-sy').innerText;
+        const montoValor = document.getElementById('r-va').innerText;
+        
+        // Mostrar loading
+        const spinner = document.getElementById('loadingSpinner');
+        spinner.style.display = 'flex';
+        
+        try {
+            // Configurar área para captura
+            const originalWidth = area.style.width;
+            const originalPadding = area.style.padding;
+            
+            area.style.width = '600px';
+            area.style.padding = '30px';
+            area.style.backgroundColor = 'white';
+            
+            // Capturar como imagen de alta calidad
+            const canvas = await html2canvas(area, {
+                scale: 2.5,
+                backgroundColor: '#ffffff',
+                useCORS: true,
+                logging: false,
+                allowTaint: false
+            });
+            
+            // Restaurar estilos
+            area.style.width = originalWidth;
+            area.style.padding = originalPadding;
+            
+            // Convertir a blob
+            const imageBlob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png', 1.0));
+            
+            // Crear archivo
+            const imageFile = new File([imageBlob], `Recibo_${folio}.png`, { type: 'image/png' });
+            
+            // Mensaje para WhatsApp
+            const mensaje = `✅ *RECIBO DE PAGO* ✅%0A%0A📄 *Folio:* #${folio}%0A👤 *Cliente:* ${cliente}%0A💰 *Monto:* ${montoSimbolo} ${montoValor}%0A📅 *Fecha:* ${new Date().toLocaleString()}%0A%0A🎫 *Adjunto comprobante.*%0A%0A📱 *Valencia Col - já Receipt*`;
+            
+            // CERRAR LA VISTA PREVIA ANTES DE ABRIR WHATSAPP
+            document.getElementById('v-screen').style.display = 'none';
+            
+            // Ocultar spinner
+            spinner.style.display = 'none';
+            
+            // === MÉTODO PARA ENVIAR DIRECTAMENTE A WHATSAPP ===
+            // Crear un enlace temporal para la imagen
+            const imageUrl = URL.createObjectURL(imageBlob);
+            
+            // Abrir WhatsApp Web/Móvil con mensaje
+            const whatsappUrl = `https://wa.me/?text=${mensaje}`;
+            window.open(whatsappUrl, '_blank');
+            
+            // Descargar automáticamente la imagen para que el usuario la tenga lista
+            setTimeout(() => {
+                const link = document.createElement('a');
+                link.download = `Recibo_${folio}_${cliente}.png`;
+                link.href = imageUrl;
+                link.click();
+                
+                setTimeout(() => {
+                    URL.revokeObjectURL(imageUrl);
+                    alert('✅ La imagen se ha descargado. En WhatsApp pégala desde tu galería o compártela como archivo.\n\n📌 TIP: En WhatsApp Web/App, haz clic en el clip 📎 → Galería → Selecciona la imagen recién descargada.');
+                }, 1000);
+            }, 500);
+            
+        } catch (error) {
+            spinner.style.display = 'none';
+            console.error('Error:', error);
+            alert('❌ Error al generar la imagen. Intenta de nuevo.');
+        }
     }
-
-    function v_clear_app(){if(confirm("¿Desea reiniciar la App y borrar datos?")){localStorage.clear();location.reload();}}
+    
+    // Función para descargar PDF (ícono de flecha hacia abajo)
+    async function v_descargar_pdf() {
+        const area = document.getElementById('v-print-area');
+        const folio = document.getElementById('r-fo').innerText;
+        const cliente = document.getElementById('r-cl').innerText;
+        
+        const spinner = document.getElementById('loadingSpinner');
+        spinner.innerHTML = '<i class="fas fa-spinner"></i><span>Generando PDF...</span>';
+        spinner.style.display = 'flex';
+        
+        const opciones = {
+            margin: 10,
+            filename: `Recibo_${folio}_${cliente}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 3, useCORS: true },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+        
+        try {
+            await html2pdf().set(opciones).from(area).save();
+            spinner.style.display = 'none';
+            alert('✅ PDF descargado correctamente');
+        } catch (error) {
+            spinner.style.display = 'none';
+            alert('❌ Error al generar PDF');
+        }
+        
+        spinner.innerHTML = '<i class="fab fa-whatsapp"></i><span>Preparando imagen para WhatsApp...</span>';
+    }
+    
+    function v_clear_app(){
+        if(confirm("Reiniciar App? Se perderán todos los datos guardados.")){ 
+            localStorage.clear(); 
+            location.reload(); 
+        }
+    }
 </script>
 </body>
-</html>
+                    </html>
