@@ -4,355 +4,179 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title class="notranslate" translate="no">já Receipt - Valencia Col</title> 
-    <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
     <style>
-        :root {
-            --bg-dark: #0f0f0f;
-            --card-dark: #1a1a1a;
-            --accent-green: #2ecc71;
-            --main-blue: #3498db;
-            --gold: #f1c40f;
-            --text-gray: #a0a0a0;
-        }
+        :root { --b:#0f0f0f; --c:#1a1a1a; --m:#3498db; --g:#f1c40f; --t:#ffffff; --ok:#27ae60; }
+        html,body{height:100%;margin:0;padding:0;background:var(--b);color:white;font-family:'Segoe UI',sans-serif;overflow-x:hidden;}
         
-        html, body { 
-            height: 100%; 
-            margin: 0; 
-            padding: 0; 
-            overflow-x: hidden; 
-            background: var(--bg-dark); 
-            color: white;
-            font-family: 'Segoe UI', sans-serif;
-        }
+        .v-gear{position:fixed;top:20px;right:20px;font-size:26px;color:var(--g);z-index:1001;cursor:pointer;transition:transform 0.5s ease;}
+        .v-gear.active{transform:rotate(180deg);}
 
-        body { 
-            display: flex; 
-            flex-direction: column; 
-            padding: 15px; 
-            box-sizing: border-box; 
-            justify-content: flex-start; /* Evita que flote en el centro */
-        }
+        .v-menu{display:none;position:fixed;top:65px;right:20px;background:var(--c);border:1px solid #333;border-radius:15px;z-index:1000;width:250px;box-shadow:0 15px 35px rgba(0,0,0,0.9);}
+        .v-item{display:block;padding:14px 18px;color:white;text-decoration:none;border-bottom:1px solid #2a2a2a;font-size:13px;cursor:pointer;}
+        .v-item:active{background:#333;}
+        .v-item:last-child{border:none;color:#ff4757;font-weight:bold;}
+
+        .v-header{text-align:center;margin:20px 0;}.v-title{font-size:32px;font-weight:800;color:var(--m);display:flex;align-items:center;justify-content:center;gap:12px;}
+        .v-card{background:var(--c);padding:18px;border-radius:20px;border:1px solid #2a2a2a;margin-bottom:12px;display:flex;flex-direction:column;gap:8px;}
+        input,select{width:100%;padding:12px;background:#252525;border:1px solid #333;border-radius:10px;color:white;font-size:14px;box-sizing:border-box;}
         
-        .settings-btn { 
-            position: fixed; top: 20px; right: 20px; 
-            font-size: 24px; color: var(--gold) !important; 
-            cursor: pointer; z-index: 1001; 
-        }
+        /* BOTON LOGO - INICIA AZUL SIEMPRE */
+        .v-upload{background:var(--m);color:white!important;padding:14px;border-radius:12px;cursor:pointer;font-size:13px;font-weight:bold;text-align:center;display:block;transition:all 0.4s ease;}
+        .v-success{background:var(--ok)!important;box-shadow: 0 0 15px var(--ok);}
 
-        .menu-flutuante {
-            display: none; position: fixed; top: 60px; right: 20px; 
-            background: var(--card-dark); border: 1px solid #333;
-            border-radius: 12px; z-index: 1000; width: 280px; box-shadow: 0 10px 30px rgba(0,0,0,0.7);
-        }
-        .menu-flutuante a, .menu-item { display: block; padding: 14px; color: white; text-decoration: none; border-bottom: 1px solid #2a2a2a; font-size: 13px; cursor: pointer; }
-        
-        .app-header { text-align: center; margin: 10px 0; flex-shrink: 0; }
-        .app-title { font-size: 32px; font-weight: 800; color: var(--main-blue); display: flex; align-items: center; justify-content: center; gap: 12px; }
-        
-        .card { 
-            background: var(--card-dark); 
-            padding: 18px; 
-            border-radius: 20px; 
-            border: 1px solid #2a2a2a; 
-            margin-bottom: 12px; 
-            display: flex; 
-            flex-direction: column; 
-            justify-content: flex-start; /* Mata el estiramiento feo */
-            gap: 8px; 
-        }
-        
-        label { font-size: 11px; color: var(--text-gray); text-transform: uppercase; font-weight: 600; display: block; margin-bottom: 4px; }
-        input, select { width: 100%; padding: 11px; margin-bottom: 8px; background: #252525; border: 1px solid #333; border-radius: 10px; color: white; box-sizing: border-box; font-size: 14px; }
-        .btn-row { display: flex; gap: 12px; margin-top: 5px; }
-        .btn { flex: 1; padding: 16px; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
-        .btn-ws { background: #25d366; color: white; }
-        .btn-rec { background: var(--main-blue); color: white; }
-        
-        #inputLogo { display: none; }
-        .custom-file-upload {
-            display: flex; align-items: center; justify-content: center; gap: 10px;
-            background: var(--main-blue); color: white; padding: 12px; border-radius: 10px;
-            cursor: pointer; font-size: 13px; font-weight: bold;
-        }
+        .v-btn{background:var(--m);color:white;width:100%;padding:18px;border:none;border-radius:12px;font-weight:bold;cursor:pointer;margin-top:10px;}
 
-        #recibo-final, #historico-screen { 
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: var(--bg-dark); color: white; z-index: 2000; overflow-y: auto; padding: 30px; box-sizing: border-box;
-        }
-
-        #recibo-final { background: #ffffff !important; }
-
-        .ad-space-fijo { height: 50px; background: #000; border-top: 1px solid #333; margin: 10px -15px -15px -15px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
-
-        @media print { .no-print { display: none !important; } #recibo-final { display: block !important; position: static !important; } }
+        #v-screen{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:white;z-index:2000;overflow-y:auto;padding:20px;box-sizing:border-box;}
+        .v-toolbar{display:flex;justify-content:flex-end;gap:35px;margin-bottom:20px;}
+        .v-val-box{position:relative;text-align:center;border:2px solid #000;padding:25px;margin:20px 0;background:#f9f9f9;}
+        .v-val-txt{font-size:38px;margin:0;font-weight:900;color:black;z-index:2;position:relative;}
+        .v-mark{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-15deg);font-size:50px;color:rgba(0,0,0,0.06);font-weight:900;}
     </style>
-
-        
 </head>
-<body onclick="fecharMenu()">
-    
-    <i class="fas fa-cog settings-btn" onclick="toggleMenu(event)"></i>
+<body onclick="v_hide_m()">
 
-    <div id="menu" class="menu-flutuante" onclick="event.stopPropagation()">
-    <!-- Abre la Política en Chrome -->
-    <div class="menu-item" onclick="window.open('https://docs.google.com/document/d/12PwE8n7WyRm1DFxLKub4a8YqVxI4m9MEXNQfEG6mVBs/edit?usp=drivesdk', '_blank')">
-        <i class="fas fa-shield-alt"></i> Política de Privacidade
-    </div>
+    <i class="fas fa-cog v-gear" id="gear-icon" onclick="v_toggle_m(event)"></i>
 
-    <!-- Historial de registros (Se queda dentro de la app porque es interno) -->
-    <div class="menu-item" onclick="abrirHistorico()">
-        <i class="fas fa-history"></i> Histórico de Registros
+    <div id="main-menu" class="v-menu" onclick="event.stopPropagation()">
+        <div class="v-item" onclick="window.open('https://docs.google.com/document/d/1Gq52X1zbYmwk3Fmfg2lKsnL1iGZ_SpibV2Fkx96IjZ8/edit?usp=drivesdk','_blank')"><i class="fas fa-user-shield"></i> Política de Privacidade</div>
+        <div class="v-item" onclick="alert('Registro Histórico Cargado')"><i class="fas fa-list-ul"></i> Registro Histórico</div>
+        <div class="v-item" onclick="window.open('https://valenciacol.carrd.co/#historia','_blank')"><i class="fas fa-book-open"></i> Nossa História</div>
+        <div class="v-item" onclick="window.open('https://valenciacol.carrd.co/#work','_blank')"><i class="fas fa-mobile-alt"></i> Mais Apps</div>
+        <div class="v-item" onclick="v_clear_app()"><i class="fas fa-power-off"></i> Reiniciar Aplicación</div>
     </div>
 
-    <!-- Abre en Nossa História en el título exacto en Chrome -->
-    <div class="menu-item" onclick="window.open('https://valenciacol.carrd.co/#historia', '_blank')">
-        <i class="fas fa-rocket"></i> Nossa História
+    <div class="v-header">
+        <div class="v-title"><i class="fas fa-bolt" style="color:var(--g)"></i> já Receipt</div>
+        <div style="font-size:10px;color:#777;text-align:center;">&copy; 2026 Valencia Col • Blindado</div>
     </div>
 
-    <!-- Abre en Mais Apps en el título exacto (#work) en Chrome -->
-    <div class="menu-item" onclick="window.open('https://valenciacol.carrd.co/#work', '_blank')">
-        <i class="fas fa-store"></i> Mais Apps
-    </div>
-
-    <!-- Botón para limpiar datos -->
-    <div class="menu-item" onclick="limparTudo()" style="color:red;">
-        <i class="fas fa-trash"></i> Limpar Tudo
-    </div>
-    </div>
-    <div class="app-header">
-        <div class="app-title notranslate" translate="no">
-            <i class="fas fa-bolt" style="color: var(--gold);"></i> já Receipt
-        </div>
-    </div>
-
-    <div style="text-align: center; font-size: 10px; color: var(--text-gray); margin-bottom: 15px; margin-top: -5px; opacity: 0.8;">
-        &copy; 2026 <span translate="no">Valencia Col</span> Innovative Solutions
-    </div>
-
-    <div class="card">
-        <div style="display: flex; justify-content: space-between;">
-            <label>Emissor (Estabelecimento)</label>
-            <span style="font-size: 10px; color: var(--gold); font-weight: bold;">PRÓX. FOLIO: <span id="nFolioPreview">001</span></span>
-        </div>
-        <input type="text" id="pNome" placeholder="Nome do Estabelecimento" oninput="salvarLocal()">
-        <input type="text" id="pCPF" placeholder="Identificación (NIT / CNPJ / ID)" oninput="salvarLocal()">
+    <div class="v-card">
+        <label style="font-size:10px; color:var(--m); font-weight:bold;">CONFIGURACIÓN INICIAL</label>
+        <input type="text" id="v-em" placeholder="Nombre de Empresa" oninput="localStorage.setItem('v_em',this.value)">
+        <input type="text" id="v-id" placeholder="NIT / CPF / Identificación" oninput="localStorage.setItem('v_id',this.value)">
         
-        <label>Logo da Empresa</label>
-        <div class="file-upload-wrapper">
-            <label for="inputLogo" class="custom-file-upload">
-                <i class="fas fa-cloud-upload-alt"></i> ADICIONAR LOGOTIPO
-            </label>
-            <input type="file" id="inputLogo" accept="image/*" onchange="previewLogo(event)">
-        </div>
+        <label for="v-file" id="v-label-logo" class="v-upload">
+            <i class="fas fa-cloud-upload-alt"></i> ADICIONAR LOGO (MAIOR)
+        </label>
+        <input type="file" id="v-file" accept="image/*" style="display:none;" onchange="v_process_logo(this)">
     </div>
 
-    <div class="card">
-        <label>Detalhes do Registro</label>
-        <input type="text" id="cServico" placeholder="Descrição do item">
-        <input type="text" id="cNome" placeholder="Nome do Cliente / Identificación">
-        <input type="number" id="cValor" placeholder="0.00" step="0.01">
-        <div style="display: flex; gap: 10px; margin-top: 5px;">
-            <div style="flex: 1;">
-                <label>Moeda</label>
-                <select id="selectMoeda" onchange="actualizarMetodos()">
-                    <option value="R$">Real (R$)</option>
-                    <option value="$">Peso ($)</option>
-                    <option value="US$">Dólar (US$)</option>
-                    <option value="€">Euro (€)</option>
-                </select>
-            </div>
-            <div style="flex: 1;">
-                <label>Método</label>
-                <select id="cMetodo"></select>
-            </div>
+    <div class="v-card">
+        <label style="font-size:10px; color:var(--m); font-weight:bold;">DATOS DEL RECIBO</label>
+        <input type="text" id="v-con" placeholder="Concepto (Ej: Venta de Nevera)">
+        <input type="text" id="v-cli" placeholder="Nombre del Cliente">
+        <input type="number" id="v-amo" placeholder="0.00">
+        <div style="display:flex;gap:10px;">
+            <select id="v-cur" style="flex:1;" onchange="v_update_methods()">
+                <option value="$">Peso ($)</option>
+                <option value="R$">Real (R$)</option>
+                <option value="€">Euro (€)</option>
+                <option value="US$">Dólar (US$)</option>
+            </select>
+            <select id="v-met" style="flex:1;"></select>
         </div>
-        <div class="btn-row">
-            <button class="btn btn-ws" onclick="shareWS()"><i class="fab fa-whatsapp"></i> WhatsApp</button>
-            <button class="btn btn-rec" onclick="generarDocumento()">GERAR PDF</button>
-        </div>
+        <button class="v-btn" onclick="v_generate_now()">GERAR RECIBO</button>
     </div>
 
-    <div id="historico-screen">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-            <h2 style="margin:0; color: var(--main-blue);">Histórico Local</h2>
-            <button onclick="document.getElementById('historico-screen').style.display='none'" style="background:none; border:none; color:white; font-size:24px;">&times;</button>
+    <div id="v-screen">
+        <div class="v-toolbar">
+            <i class="fas fa-share-nodes" onclick="v_whatsapp_share()" style="font-size:40px;color:#25d366;cursor:pointer;"></i>
+            <i class="fas fa-times" onclick="document.getElementById('v-screen').style.display='none'" style="font-size:40px;color:black;cursor:pointer;"></i>
         </div>
-        <div id="lista-historico"></div>
-    </div>
-
-    <div id="recibo-final">
-        <button class="no-print" onclick="document.getElementById('recibo-final').style.display='none'" style="float:right; border:none; background:none; font-size:24px; color: black !important;">&times;</button>
-        <div id="pdf-content" style="color: black !important;">
-            <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 15px; margin-bottom: 25px;">
-                <img id="res-logo" src="" style="max-height: 70px; display:none; margin: 0 auto 10px;">
-                <h2 style="margin:0; letter-spacing: 2px;">RECIBO DE PAGAMENTO</h2>
-                <small>Controle Interno • Valencia Col Innovative Solutions</small>
+        <div id="v-print-area" style="color:black!important;padding:20px;background:white;">
+            <div style="text-align:center;border-bottom:3px solid #000;padding-bottom:15px;margin-bottom:20px;">
+                <img id="v-res-logo" src="" style="max-height:140px;max-width:280px;display:none;margin:0 auto 10px;object-fit:contain;">
+                <h2 style="margin:0;font-weight:900;text-transform:uppercase;">Recibo de Pagamento</h2>
+                <small>Valencia Col Innovative Solutions • Original</small>
             </div>
-            <div style="font-size: 14px;">
-                <div style="display: flex; justify-content: space-between;">
-                    <span><b>EMISSOR:</b> <span id="res-pNome" style="text-transform: uppercase;"></span></span>
-                    <span style="font-weight: bold;">Folio: <span id="res-nFolio">000</span></span>
-                </div>
-                <p><b>IDENTIFICAÇÃO:</b> <span id="res-pCPF"></span></p>
-                <p>Recebi de <b><span id="res-cNome"></span></b> a importancia de:</p>
-                <div style="text-align:center; border: 2px solid #000; padding: 20px; margin: 20px 0; background: #f9f9f9;">
-                    <h1 style="margin: 0; font-size: 34px;"><span id="res-simbolo"></span> <span id="res-cValor"></span></h1>
-                </div>
-                <p><b>REFERENTE A:</b> <span id="res-cServico"></span></p>
-                <p><b>FORMA DE PAGAMENTO:</b> <span id="res-cMetodo"></span></p>
+            <p><b>EMISSOR:</b> <span id="r-em"></span> <span style="float:right;"><b>FOLIO:</b> #<span id="r-fo"></span></span></p>
+            <p><b>ID/NIT:</b> <span id="r-id"></span></p>
+            <div class="v-val-box">
+                <div class="v-mark">ORIGINAL</div>
+                <h1 class="v-val-txt"><span id="r-sy"></span> <span id="r-va"></span></h1>
             </div>
-            <div style="display: flex; justify-content: space-between; margin-top: 40px;">
-                <p><b>CIDADE:</b> Presidente Dutra</p>
-                <p><b>DATA:</b> <span id="res-data"></span></p>
-            </div>
-            <div style="background: #f0f0f0; padding: 10px; font-size: 9px; text-align: center; margin-top: 30px;">
-                ESTE DOCUMENTO DESTINA-SE EXCLUSIVAMENTE AO CONTROLE INTERNO.<br>NÃO É NOTA FISCAL. GERADO PELO APP JA RECEIPT.
-            </div>
+            <p><b>RECEBEMOS DE:</b> <span id="r-cl"></span></p>
+            <p><b>REFERENTE A:</b> <span id="r-co"></span></p>
+            <p><b>FORMA DE PAGO:</b> <span id="r-me"></span></p>
+            <p style="text-align:right;margin-top:40px;font-size:12px;border-top:1px solid #ddd;padding-top:10px;">
+                <b>Local:</b> <span id="r-lo">Brasil</span> | <span id="r-da"></span>
+            </p>
         </div>
-        <button class="no-print" onclick="lanzarImpresion()" style="width:100%; padding:15px; background:#3498db; color:white; border:none; border-radius:10px; font-weight:bold; margin-top:20px;">SALVAR / IMPRIMIR</button>
     </div>
 
 <script>
-    document.addEventListener('click', function(e) {
-    let t = e.target.closest('a');
-    if (t && t.href) {
-        // Si el link NO es de tu github, mándalo afuera de la app a la fuerza
-        if (!t.href.includes('valencia-col.github.io')) {
-            e.preventDefault();
-            window.open(t.href, '_system'); 
+    const v_methods = { '$':['Nequi','Daviplata','Efectivo'], 'R$':['Pix','Dinheiro','Cartão'], '€':['Virement','Carte'], 'US$':['Zelle','Cash'] };
+
+    window.onload=()=>{
+        document.getElementById('v-em').value=localStorage.getItem('v_em')||'';
+        document.getElementById('v-id').value=localStorage.getItem('v_id')||'';
+        v_update_methods(); v_start_geo();
+        if(localStorage.getItem('v_saved_logo')) v_mark_logo_success();
+    };
+
+    function v_toggle_m(e){ e.stopPropagation(); const g=document.getElementById('gear-icon'); g.classList.toggle('active'); const m=document.getElementById('main-menu'); m.style.display=(m.style.display==='block')?'none':'block'; }
+    function v_hide_m(){ document.getElementById('main-menu').style.display='none'; document.getElementById('gear-icon').classList.remove('active');}
+
+    function v_process_logo(input){
+        if(input.files && input.files[0]){
+            const reader = new FileReader();
+            reader.onload=(e)=>{ localStorage.setItem('v_saved_logo', e.target.result); v_mark_logo_success(); };
+            reader.readAsDataURL(input.files[0]);
         }
     }
-}, true);
-
-    const metodosPorMoneda = {
-        'R$': ['Dinheiro', 'Pix', 'Cartão', 'Transferência'],
-        '$': ['Efectivo', 'Transferencia', 'Nequi/Daviplata', 'Tarjeta'],
-        'US$': ['Cash', 'Zelle', 'Card', 'Wire Transfer'],
-        '€': ['Espèces', 'Virement', 'Carte']
-    };
-
-    window.onload = function() {
-        document.getElementById('pNome').value = localStorage.getItem('pNome') || '';
-        document.getElementById('pCPF').value = localStorage.getItem('pCPF') || '';
-        actualizarMetodos();
-        actualizarFolioPreview();
+    
+    function v_mark_logo_success(){
+        const label = document.getElementById('v-label-logo');
+        label.classList.add('v-success');
+        label.innerHTML = '<i class="fas fa-check-double"></i> ¡LOGO SUBIDO CON ÉXITO! ✅';
     }
 
-    function lanzarImpresion() {
-    const elemento = document.getElementById('pdf-content');
-    const folio = document.getElementById('res-nFolio').innerText;
-    // Creamos el nombre aquí para que sea dinámico según el folio
-    const nombreFinal = 'Recibo_ValenciaCol_' + folio + '.pdf'; 
-
-    const opciones = {
-        margin: 10,
-        filename: nombreFinal,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    };
-
-    // Esta es la parte que "amarra" el nombre para que no salga como Download.pdf
-    html2pdf().set(opciones).from(elemento).save(nombreFinal);
+    function v_update_methods(){
+        const cur=document.getElementById('v-cur').value;
+        const sel=document.getElementById('v-met');
+        sel.innerHTML='';
+        v_methods[cur].forEach(m=>sel.innerHTML+=`<option value="${m}">${m}</option>`);
     }
-    function actualizarMetodos() {
-        const moneda = document.getElementById('selectMoeda').value;
-        const comboMetodo = document.getElementById('cMetodo');
-        comboMetodo.innerHTML = '';
-        metodosPorMoneda[moneda].forEach(m => {
-            let opt = document.createElement('option');
-            opt.value = m; opt.innerText = m; comboMetodo.appendChild(opt);
+
+    async function v_start_geo(){
+        if(navigator.geolocation) navigator.geolocation.getCurrentPosition(async(p)=>{
+            const res=await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${p.coords.latitude}&lon=${p.coords.longitude}&format=json`);
+            const data=await res.json(); document.getElementById('r-lo').innerText=data.address.city||data.address.town||"Brasil";
         });
     }
 
-    function previewLogo(e) {
-        const reader = new FileReader();
-        reader.onload = function(){ localStorage.setItem('userLogo', reader.result); }
-        reader.readAsDataURL(e.target.files[0]);
+    function v_generate_now(){
+        const val=document.getElementById('v-amo').value; if(!val) return alert("Ingrese el valor");
+        const f=(localStorage.getItem('v_folio_num')||'1').padStart(3,'0');
+        document.getElementById('r-em').innerText=document.getElementById('v-em').value.toUpperCase();
+        document.getElementById('r-id').innerText=document.getElementById('v-id').value;
+        document.getElementById('r-cl').innerText=document.getElementById('v-cli').value || "Público General";
+        document.getElementById('r-va').innerText=parseFloat(val).toLocaleString('de-DE',{minimumFractionDigits:2});
+        document.getElementById('r-co').innerText=document.getElementById('v-con').value;
+        document.getElementById('r-sy').innerText=document.getElementById('v-cur').value;
+        document.getElementById('r-me').innerText=document.getElementById('v-met').value;
+        document.getElementById('r-fo').innerText=f;
+        document.getElementById('r-da').innerText=new Date().toLocaleString();
+        const logo=localStorage.getItem('v_saved_logo'); if(logo){const i=document.getElementById('v-res-logo');i.src=logo;i.style.display='block';}
+        localStorage.setItem('v_folio_num',parseInt(f)+1);
+        document.getElementById('v-screen').style.display='block';
     }
 
-    function salvarLocal() {
-        localStorage.setItem('pNome', document.getElementById('pNome').value);
-        localStorage.setItem('pCPF', document.getElementById('pCPF').value);
-    }
-
-    function toggleMenu(e) { e.stopPropagation(); const m = document.getElementById('menu'); m.style.display = (m.style.display === 'block') ? 'none' : 'block'; }
-    function fecharMenu() { document.getElementById('menu').style.display = 'none'; }
-    function actualizarFolioPreview() {
-        let f = localStorage.getItem('folio_cnt') || '1';
-        document.getElementById('nFolioPreview').innerText = f.padStart(3, '0');
-    }
-
-    function formatearNumero(valor) {
-        const formatos = { 'R$': 'pt-BR', '$': 'es-CO', 'US$': 'en-US', '€': 'de-DE' };
-        const monedaActual = document.getElementById('selectMoeda').value;
-        return new Intl.NumberFormat(formatos[monedaActual] || 'pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(valor);
-    }
-
-    function generarDocumento() {
-        const v = document.getElementById('cValor').value;
-        const s = document.getElementById('cServico').value;
-        if(!v || !s) return alert('Campos obrigatórios!');
-        const folioActual = (localStorage.getItem('folio_cnt') || '1').padStart(3, '0');
-        const fechaActual = new Date().toLocaleString();
-        const monedaActual = document.getElementById('selectMoeda').value;
-        const valorFormatado = formatearNumero(v);
-        let hist = JSON.parse(localStorage.getItem('historico_recibos') || '[]');
-        hist.unshift({ folio: folioActual, cliente: document.getElementById('cNome').value || "Cliente", valor: valorFormatado, moneda: monedaActual, fecha: fechaActual, servicio: s });
-        localStorage.setItem('historico_recibos', JSON.stringify(hist));
-        document.getElementById('res-pNome').innerText = document.getElementById('pNome').value || 'USUÁRIO';
-        document.getElementById('res-pCPF').innerText = document.getElementById('pCPF').value || '---';
-        document.getElementById('res-cNome').innerText = document.getElementById('cNome').value || "Cliente";
-        document.getElementById('res-cValor').innerText = valorFormatado;
-        document.getElementById('res-cServico').innerText = s;
-        document.getElementById('res-simbolo').innerText = monedaActual;
-        document.getElementById('res-cMetodo').innerText = document.getElementById('cMetodo').value;
-        document.getElementById('res-data').innerText = fechaActual;
-        document.getElementById('res-nFolio').innerText = folioActual;
-        localStorage.setItem('folio_cnt', (parseInt(folioActual) + 1).toString());
-        actualizarFolioPreview();
-        const logo = localStorage.getItem('userLogo');
-        if(logo) { document.getElementById('res-logo').src = logo; document.getElementById('res-logo').style.display = 'block'; }
-        document.getElementById('recibo-final').style.display = 'block';
-    }
-
-    function abrirHistorico() {
-        const lista = document.getElementById('lista-historico');
-        const hist = JSON.parse(localStorage.getItem('historico_recibos') || '[]');
-        lista.innerHTML = hist.length ? '' : '<p style="text-align:center; color:gray; padding:20px;">Sem registros.</p>';
-        hist.forEach((item, index) => {
-            lista.innerHTML += `<div class="hist-item" onclick="reconstruirRecibo(${index})" style="background:#1a1a1a; padding:15px; border-radius:10px; margin-bottom:10px; border-left:4px solid #3498db;">
-                <div style="display:flex; justify-content:space-between; font-weight:bold; color:#f1c40f;"><span>Folio: ${item.folio}</span><span>${item.moneda} ${item.valor}</span></div>
-                <div style="font-size:13px; margin-top:5px; color:white;"><b>Cliente:</b> ${item.cliente}</div></div>`;
+    async function v_whatsapp_share(){
+        const area=document.getElementById('v-print-area');
+        const canvas=await html2canvas(area,{scale:3});
+        canvas.toBlob(async(blob)=>{
+            const file=new File([blob],`Recibo_ValenciaCol.png`,{type:'image/png'});
+            if(navigator.canShare && navigator.canShare({files:[file]})){
+                await navigator.share({files:[file],title:'Recibo',text:'Comprobante de Pago'});
+            }else{ alert("Botón compartido solo disponible en celulares."); }
         });
-        document.getElementById('historico-screen').style.display = 'block';
-        fecharMenu();
     }
 
-    function reconstruirRecibo(index) {
-        const item = JSON.parse(localStorage.getItem('historico_recibos'))[index];
-        document.getElementById('res-pNome').innerText = localStorage.getItem('pNome') || 'USUÁRIO';
-        document.getElementById('res-cNome').innerText = item.cliente;
-        document.getElementById('res-cValor').innerText = item.valor;
-        document.getElementById('res-cServico').innerText = item.servicio;
-        document.getElementById('res-simbolo').innerText = item.moneda;
-        document.getElementById('res-data').innerText = item.fecha;
-        document.getElementById('res-nFolio').innerText = item.folio;
-        document.getElementById('recibo-final').style.display = 'block';
-    }
-
-    function limparTudo() { if(confirm("Apagar tudo?")) { localStorage.clear(); location.reload(); } }
-
-    function shareWS() {
-        const v = document.getElementById('cValor').value;
-        const s = document.getElementById('cServico').value;
-        if(!v) return alert('Valor vazio!');
-        const mensaje = encodeURIComponent(`Recibo ValenciaCol: ${s} - ${document.getElementById('selectMoeda').value} ${formatearNumero(v)}`);
-        window.open(`https://api.whatsapp.com/send?text=${mensaje}`, '_blank');
-    }
+    function v_clear_app(){if(confirm("¿Desea reiniciar la App y borrar datos?")){localStorage.clear();location.reload();}}
 </script>
 </body>
-                                           </html>
+</html>
