@@ -41,6 +41,20 @@
         .loading-spinner i{font-size:40px;color:var(--g);animation:spin 1s linear infinite;}
         .loading-spinner span{color:white;font-size:14px;font-weight:bold;}
         @keyframes spin{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
+        
+        /* Estilo para el pie de página legal */
+        .legal-footer {
+            margin-top: 30px;
+            padding-top: 10px;
+            border-top: 1px dashed #ccc;
+            text-align: center;
+            font-size: 9px;
+            color: #666;
+        }
+        .legal-footer i {
+            color: #999;
+            margin-right: 5px;
+        }
     </style>
 </head>
 <body onclick="v_hide_m()">
@@ -48,11 +62,11 @@
     <i class="fas fa-cog v-gear" id="gear-icon" onclick="v_toggle_m(event)"></i>
 
     <div id="main-menu" class="v-menu" onclick="event.stopPropagation()">
-        <div class="v-item" onclick="window.open('https://docs.google.com/document/d/12PwE8n7WyRm1DFxLKub4a8YqVxI4m9MEXNQfEG6mVBs/edit?usp=drivesdk')"><i class="fas fa-user-shield"></i> Política de Privacidade</div>
-        <div class="v-item" onclick="alert('Registro Histórico Cargado')"><i class="fas fa-list-ul"></i> Registro Histórico</div>
-        <div class="v-item" onclick="window.open('https://valenciacol.carrd.co/#historia','_blank')"><i class="fas fa-book-open"></i> Nossa História</div>
-        <div class="v-item" onclick="window.open('https://valenciacol.carrd.co/#work','_blank')"><i class="fas fa-mobile-alt"></i> Mais Apps</div>
-        <div class="v-item" onclick="v_clear_app()"><i class="fas fa-power-off"></i> Reiniciar Aplicación</div>
+        <div class="v-item" onclick="window.open('https://docs.google.com/document/d/12PwE8n7WyRm1DFxLKub4a8YqVxI4m9MEXNQfEG6mVBs/edit?usp=drivesdk')"><i class="fas fa-user-shield"></i> <span class="menu-privacidad">Política de Privacidade</span></div>
+        <div class="v-item" onclick="alert('Registro Histórico Cargado')"><i class="fas fa-list-ul"></i> <span class="menu-historial">Registro Histórico</span></div>
+        <div class="v-item" onclick="window.open('https://valenciacol.carrd.co/#historia','_blank')"><i class="fas fa-book-open"></i> <span class="menu-historia">Nossa História</span></div>
+        <div class="v-item" onclick="window.open('https://valenciacol.carrd.co/#work','_blank')"><i class="fas fa-mobile-alt"></i> <span class="menu-apps">Mais Apps</span></div>
+        <div class="v-item" onclick="v_clear_app()"><i class="fas fa-power-off"></i> <span class="menu-reiniciar">Reiniciar Aplicación</span></div>
     </div>
 
     <div class="v-header">
@@ -61,7 +75,7 @@
     </div>
 
     <div class="v-card">
-        <label style="font-size:10px; color:var(--m); font-weight:bold;">CONFIGURACIÓN INICIAL</label>
+        <label style="font-size:10px; color:var(--m); font-weight:bold;" id="label-config"><i class="fas fa-cog"></i> CONFIGURACIÓN INICIAL</label>
         <input type="text" id="v-em" placeholder="Nombre de Empresa" oninput="localStorage.setItem('v_em',this.value)">
         <input type="text" id="v-id" placeholder="NIT / CPF / Identificación" oninput="localStorage.setItem('v_id',this.value)">
         
@@ -72,7 +86,7 @@
     </div>
 
     <div class="v-card">
-        <label style="font-size:10px; color:var(--m); font-weight:bold;">DATOS DEL RECIBO</label>
+        <label style="font-size:10px; color:var(--m); font-weight:bold;" id="label-datos"><i class="fas fa-receipt"></i> DATOS DEL RECIBO</label>
         <input type="text" id="v-con" placeholder="Concepto (Ej: Venta de Nevera)">
         <input type="text" id="v-cli" placeholder="Nombre del Cliente">
         <input type="number" id="v-amo" placeholder="0.00">
@@ -85,53 +99,216 @@
             </select>
             <select id="v-met" style="flex:1;"></select>
         </div>
-        <button class="v-btn" onclick="v_generate_and_share()">GERAR RECIBO</button>
+        <button class="v-btn" id="btn-generar" onclick="v_generate_and_share()"><i class="fas fa-receipt"></i> GENERAR RECIBO</button>
     </div>
 
     <div id="v-screen">
         <div class="v-toolbar">
-            <i class="fab fa-whatsapp" onclick="v_enviar_whatsapp_directo()" style="font-size:40px;color:#25d366;cursor:pointer;"></i>
-            <i class="fas fa-download" onclick="v_descargar_pdf()" style="font-size:40px;color:#3498db;cursor:pointer;"></i>
-            <i class="fas fa-times" onclick="document.getElementById('v-screen').style.display='none'" style="font-size:40px;color:black;cursor:pointer;"></i>
+            <i class="fab fa-whatsapp" id="icon-whatsapp" onclick="v_enviar_whatsapp_directo()" style="font-size:40px;color:#25d366;cursor:pointer;"></i>
+            <i class="fas fa-download" id="icon-download" onclick="v_descargar_pdf()" style="font-size:40px;color:#3498db;cursor:pointer;"></i>
+            <i class="fas fa-times" id="icon-cerrar" onclick="document.getElementById('v-screen').style.display='none'" style="font-size:40px;color:black;cursor:pointer;"></i>
         </div>
         <div id="v-print-area" style="color:black!important;padding:20px;background:white;">
             <div style="text-align:center;border-bottom:3px solid #000;padding-bottom:15px;margin-bottom:20px;">
                 <img id="v-res-logo" src="" style="max-height:140px;max-width:280px;display:none;margin:0 auto 10px;object-fit:contain;">
-                <h2 style="margin:0;font-weight:900;text-transform:uppercase;">Recibo de Pagamento</h2>
-                <small>Valencia Col Innovative Solutions • Original</small>
+                <h2 style="margin:0;font-weight:900;text-transform:uppercase;" id="recibo-titulo">Recibo de Pagamento</h2>
+                <small id="recibo-footer">Valencia Col Innovative Solutions • Original</small>
             </div>
-            <p><b>EMISSOR:</b> <span id="r-em"></span> <span style="float:right;"><b>FOLIO:</b> #<span id="r-fo"></span></span></p>
-            <p><b>ID/NIT:</b> <span id="r-id"></span></p>
+            <p><b id="label-emissor">EMISSOR:</b> <span id="r-em"></span> <span style="float:right;"><b id="label-folio">FOLIO:</b> #<span id="r-fo"></span></span></p>
+            <p><b id="label-id">ID/NIT:</b> <span id="r-id"></span></p>
             <div class="v-val-box">
-                <div class="v-mark">ORIGINAL</div>
+                <div class="v-mark" id="marca-agua">ORIGINAL</div>
                 <h1 class="v-val-txt"><span id="r-sy"></span> <span id="r-va"></span></h1>
             </div>
-            <p><b>RECEBEMOS DE:</b> <span id="r-cl"></span></p>
-            <p><b>REFERENTE A:</b> <span id="r-co"></span></p>
-            <p><b>FORMA DE PAGO:</b> <span id="r-me"></span></p>
+            <p><b id="label-recibimos">RECEBEMOS DE:</b> <span id="r-cl"></span></p>
+            <p><b id="label-referente">REFERENTE A:</b> <span id="r-co"></span></p>
+            <p><b id="label-forma">FORMA DE PAGO:</b> <span id="r-me"></span></p>
             <p style="text-align:right;margin-top:40px;font-size:12px;border-top:1px solid #ddd;padding-top:10px;">
-                <b>Local:</b> <span id="r-lo">Detectando...</span> | <span id="r-da"></span>
+                <b id="label-local">Local:</b> <span id="r-lo">Detectando...</span> | <span id="r-da"></span>
             </p>
+            
+            <!-- PIE DE PÁGINA LEGAL -->
+            <div class="legal-footer">
+                <i class="fas fa-info-circle"></i>
+                <span id="mensaje-legal">Este documento es un comprobante interno de pago, no tiene validez como factura fiscal ni como documento ante hacienda. Sirve únicamente como constancia de transacción entre las partes.</span>
+            </div>
         </div>
     </div>
 
     <div class="loading-spinner" id="loadingSpinner">
         <i class="fab fa-whatsapp"></i>
-        <span>Preparando imagen para WhatsApp...</span>
+        <span id="spinner-text">Preparando imagen para WhatsApp...</span>
     </div>
 
 <script>
     // ============================================
-    // CONFIGURACIÓN INICIAL
+    // MULTI-IDIOMA (ES, PT, EN) + GEOLOCALIZACIÓN + PIE LEGAL
+    // ============================================
+    
+    // 1. DETECTAR IDIOMA DEL CELULAR
+    let idioma = 'es';
+    let langCode = (navigator.language || navigator.userLanguage || 'es').toLowerCase();
+    let mainLang = langCode.split('-')[0];
+    
+    if (mainLang === 'pt') idioma = 'pt';
+    else if (mainLang === 'en') idioma = 'en';
+    else idioma = 'es';
+    
+    localStorage.setItem('app_idioma', idioma);
+    
+    // 2. TEXTOS EN CADA IDIOMA
+    const textos = {
+        es: {
+            config: "CONFIGURACIÓN INICIAL", empresa: "Nombre de Empresa", nit: "NIT / CPF / Identificación",
+            logo: "ADICIONAR LOGO (MAIOR)", datos: "DATOS DEL RECIBO", concepto: "Concepto (Ej: Venta de Nevera)",
+            cliente: "Nombre del Cliente", monto: "Monto (0.00)", generar: "GENERAR RECIBO",
+            recibo: "Recibo de Pago", footer: "Valencia Col • Comprobante Digital",
+            emissor: "EMISOR:", folio: "FOLIO:", recibimos: "RECIBIMOS DE:", referente: "REFERENTE A:",
+            forma: "FORMA DE PAGO:", local: "Local:", marca: "ORIGINAL", id: "ID/NIT:",
+            privacidad: "Política de Privacidad", historial: "Registro Histórico", historia: "Nuestra Historia",
+            apps: "Más Apps", reiniciar: "Reiniciar Aplicación",
+            whatsapp: "Enviar por WhatsApp", descargar: "Descargar PDF", cerrar: "Cerrar",
+            spinner: "Preparando imagen para WhatsApp...",
+            legal: "Este documento es un comprobante interno de pago, no tiene validez como factura fiscal ni como documento ante hacienda. Sirve únicamente como constancia de transacción entre las partes."
+        },
+        pt: {
+            config: "CONFIGURAÇÃO INICIAL", empresa: "Nome da Empresa", nit: "CNPJ / CPF / Identificação",
+            logo: "ADICIONAR LOGO (MAIOR)", datos: "DADOS DO COMPROVANTE", concepto: "Descrição (Ex: Venda de Geladeira)",
+            cliente: "Nome do Cliente", monto: "Valor (0,00)", generar: "GERAR COMPROVANTE",
+            recibo: "Comprovante de Pagamento", footer: "Valencia Col • Comprovante Digital",
+            emissor: "EMISSOR:", folio: "NÚMERO:", recibimos: "RECEBEMOS DE:", referente: "REFERENTE A:",
+            forma: "FORMA DE PAGAMENTO:", local: "Local:", marca: "ORIGINAL", id: "CNPJ/CPF:",
+            privacidad: "Política de Privacidade", historial: "Registro Histórico", historia: "Nossa História",
+            apps: "Mais Apps", reiniciar: "Reiniciar Aplicação",
+            whatsapp: "Enviar pelo WhatsApp", descargar: "Baixar PDF", cerrar: "Fechar",
+            spinner: "Preparando imagem para o WhatsApp...",
+            legal: "Este documento é um comprovante interno de pagamento, não tem validade como nota fiscal nem como documento perante o fisco. Serve apenas como comprovante de transação entre as partes."
+        },
+        en: {
+            config: "INITIAL SETUP", empresa: "Company Name", nit: "Tax ID / ID Number",
+            logo: "UPLOAD LOGO", datos: "RECEIPT DATA", concepto: "Concept (Ex: Refrigerator Sale)",
+            cliente: "Customer Name", monto: "Amount (0.00)", generar: "GENERATE RECEIPT",
+            recibo: "Payment Receipt", footer: "Valencia Col • Digital Receipt",
+            emissor: "ISSUER:", folio: "FOLIO:", recibimos: "RECEIVED FROM:", referente: "REFERENCE:",
+            forma: "PAYMENT METHOD:", local: "Location:", marca: "ORIGINAL", id: "ID/TAX ID:",
+            privacidad: "Privacy Policy", historial: "History Log", historia: "Our Story",
+            apps: "More Apps", reiniciar: "Restart App",
+            whatsapp: "Share via WhatsApp", descargar: "Download PDF", cerrar: "Close",
+            spinner: "Preparing image for WhatsApp...",
+            legal: "This document is an internal payment receipt, not valid as a tax invoice or fiscal document. It serves only as proof of transaction between the parties."
+        }
+    };
+    
+    const t = textos[idioma];
+    
+    // 3. APLICAR TRADUCCIÓN
+    function aplicarTraduccion() {
+        const labelConfig = document.getElementById('label-config');
+        if(labelConfig) labelConfig.innerHTML = `<i class="fas fa-cog"></i> ${t.config}`;
+        
+        const labelDatos = document.getElementById('label-datos');
+        if(labelDatos) labelDatos.innerHTML = `<i class="fas fa-receipt"></i> ${t.datos}`;
+        
+        const emp = document.getElementById('v-em');
+        if(emp) emp.placeholder = t.empresa;
+        
+        const iden = document.getElementById('v-id');
+        if(iden) iden.placeholder = t.nit;
+        
+        const logoLabel = document.getElementById('v-label-logo');
+        if(logoLabel && !logoLabel.classList.contains('v-success')) {
+            logoLabel.innerHTML = `<i class="fas fa-cloud-upload-alt"></i> ${t.logo}`;
+        }
+        
+        const concepto = document.getElementById('v-con');
+        if(concepto) concepto.placeholder = t.concepto;
+        
+        const cliente = document.getElementById('v-cli');
+        if(cliente) cliente.placeholder = t.cliente;
+        
+        const monto = document.getElementById('v-amo');
+        if(monto) monto.placeholder = t.monto;
+        
+        const btn = document.getElementById('btn-generar');
+        if(btn) btn.innerHTML = `<i class="fas fa-receipt"></i> ${t.generar}`;
+        
+        const menuPriv = document.querySelector('.menu-privacidad');
+        if(menuPriv) menuPriv.innerText = t.privacidad;
+        
+        const menuHist = document.querySelector('.menu-historial');
+        if(menuHist) menuHist.innerText = t.historial;
+        
+        const menuHistoria = document.querySelector('.menu-historia');
+        if(menuHistoria) menuHistoria.innerText = t.historia;
+        
+        const menuApps = document.querySelector('.menu-apps');
+        if(menuApps) menuApps.innerText = t.apps;
+        
+        const menuReiniciar = document.querySelector('.menu-reiniciar');
+        if(menuReiniciar) menuReiniciar.innerText = t.reiniciar;
+        
+        const iconWA = document.getElementById('icon-whatsapp');
+        if(iconWA) iconWA.title = t.whatsapp;
+        
+        const iconDown = document.getElementById('icon-download');
+        if(iconDown) iconDown.title = t.descargar;
+        
+        const iconClose = document.getElementById('icon-cerrar');
+        if(iconClose) iconClose.title = t.cerrar;
+        
+        const spinnerText = document.getElementById('spinner-text');
+        if(spinnerText) spinnerText.innerText = t.spinner;
+        
+        const reciboTitle = document.getElementById('recibo-titulo');
+        if(reciboTitle) reciboTitle.innerText = t.recibo;
+        
+        const reciboFooter = document.getElementById('recibo-footer');
+        if(reciboFooter) reciboFooter.innerText = t.footer;
+        
+        const labelEmissor = document.getElementById('label-emissor');
+        if(labelEmissor) labelEmissor.innerText = t.emissor;
+        
+        const labelFolio = document.getElementById('label-folio');
+        if(labelFolio) labelFolio.innerText = t.folio;
+        
+        const labelId = document.getElementById('label-id');
+        if(labelId) labelId.innerText = t.id;
+        
+        const marcaAgua = document.getElementById('marca-agua');
+        if(marcaAgua) marcaAgua.innerText = t.marca;
+        
+        const labelRecibimos = document.getElementById('label-recibimos');
+        if(labelRecibimos) labelRecibimos.innerText = t.recibimos;
+        
+        const labelReferente = document.getElementById('label-referente');
+        if(labelReferente) labelReferente.innerText = t.referente;
+        
+        const labelForma = document.getElementById('label-forma');
+        if(labelForma) labelForma.innerText = t.forma;
+        
+        const labelLocal = document.getElementById('label-local');
+        if(labelLocal) labelLocal.innerText = t.local;
+        
+        // PIE DE PÁGINA LEGAL TRADUCIDO
+        const mensajeLegal = document.getElementById('mensaje-legal');
+        if(mensajeLegal) mensajeLegal.innerText = t.legal;
+        
+        document.documentElement.lang = idioma;
+    }
+    
+    // ============================================
+    // FUNCIONES ORIGINALES DE LA APP
     // ============================================
     const v_methods = { '$':['Nequi','Daviplata','Efectivo'], 'R$':['Pix','Dinheiro','Cartão'], '€':['Virement','Carte'], 'US$':['Zelle','Cash'] };
 
     window.onload=()=>{
+        aplicarTraduccion();
         document.getElementById('v-em').value=localStorage.getItem('v_em')||'';
         document.getElementById('v-id').value=localStorage.getItem('v_id')||'';
         v_update_methods();
-        v_obtener_ubicacion_real();  // Llamada a la geolocalización
+        v_obtener_ubicacion_real();
         if(localStorage.getItem('v_saved_logo')) v_mark_logo_success();
+        console.log(`✅ App en ${idioma.toUpperCase()} - ${langCode}`);
     };
 
     function v_toggle_m(e){ e.stopPropagation(); const g=document.getElementById('gear-icon'); g.classList.toggle('active'); const m=document.getElementById('main-menu'); m.style.display=(m.style.display==='block')?'none':'block'; }
@@ -172,7 +349,6 @@
         document.getElementById('r-me').innerText=document.getElementById('v-met').value;
         document.getElementById('r-fo').innerText=f;
         document.getElementById('r-da').innerText=new Date().toLocaleString();
-        
         const logo=localStorage.getItem('v_saved_logo'); 
         const i=document.getElementById('v-res-logo');
         if(logo){ i.src=logo; i.style.display='block'; } else { i.style.display='none'; }
@@ -232,7 +408,7 @@
                     URL.revokeObjectURL(imageUrl);
                 }, 1000);
             }, 500);
-            
+
         } catch (error) {
             spinner.style.display = 'none';
             console.error('Error:', error);
@@ -277,23 +453,22 @@
     }
 
     // ============================================
-    // GEOLOCALIZACIÓN - Detecta ciudad real (Presidente Dutra, Pereira, etc.)
+    // GEOLOCALIZACIÓN - Ciudad, Estado y País REAL
     // ============================================
     
     async function v_obtener_ubicacion_real() {
         const localElement = document.getElementById('r-lo');
         if (localElement) {
             localElement.innerText = "Detectando...";
-        }
-        
+    }
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
                 async (position) => {
                     try {
                         const lat = position.coords.latitude;
                         const lon = position.coords.longitude;
-                        const idioma = navigator.language || 'es';
-                        const response = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=${idioma}`);
+                        const idiomaGeo = navigator.language || 'es';
+                        const response = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=${idiomaGeo}`);
                         const data = await response.json();
                         
                         let ciudad = data.address.city || data.address.town || data.address.village || data.address.municipality;
@@ -338,8 +513,8 @@
             let region = data.region;
             let pais = data.country_name;
             let ubicacionTexto = "";
-            
-            if (ciudad) ubicacionTexto += ciudad;
+
+        if (ciudad) ubicacionTexto += ciudad;
             if (region && ciudad) ubicacionTexto += `, ${region}`;
             else if (region && !ciudad) ubicacionTexto += region;
             if (pais) {
@@ -379,8 +554,8 @@
                     'BR': 'Brasil', 'CO': 'Colombia', 'US': 'Estados Unidos',
                     'ES': 'España', 'MX': 'México', 'AR': 'Argentina',
                     'PE': 'Perú', 'CL': 'Chile', 'EC': 'Ecuador'
-      };
- let nombrePais = nombresPaises[pais] || pais;
+                };
+                let nombrePais = nombresPaises[pais] || pais;
                 if (ubicacionTexto) ubicacionTexto += `, ${nombrePais}`;
                 else ubicacionTexto = nombrePais;
             }
@@ -393,4 +568,4 @@
     }
 </script>
 </body>
-</html> 
+</html>
