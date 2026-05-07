@@ -41,8 +41,6 @@
         .loading-spinner i{font-size:40px;color:var(--g);animation:spin 1s linear infinite;}
         .loading-spinner span{color:white;font-size:14px;font-weight:bold;}
         @keyframes spin{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
-        
-        .whatsapp-btn{background:#25d366;color:white;border-radius:50px;padding:12px 20px;display:inline-flex;align-items:center;gap:10px;font-weight:bold;}
     </style>
 </head>
 <body onclick="v_hide_m()">
@@ -112,7 +110,7 @@
             <p><b>REFERENTE A:</b> <span id="r-co"></span></p>
             <p><b>FORMA DE PAGO:</b> <span id="r-me"></span></p>
             <p style="text-align:right;margin-top:40px;font-size:12px;border-top:1px solid #ddd;padding-top:10px;">
-                <b>Local:</b> <span id="r-lo">Brasil</span> | <span id="r-da"></span>
+                <b>Local:</b> <span id="r-lo">Detectando...</span> | <span id="r-da"></span>
             </p>
         </div>
     </div>
@@ -123,12 +121,16 @@
     </div>
 
 <script>
+    // ============================================
+    // CONFIGURACIÓN INICIAL
+    // ============================================
     const v_methods = { '$':['Nequi','Daviplata','Efectivo'], 'R$':['Pix','Dinheiro','Cartão'], '€':['Virement','Carte'], 'US$':['Zelle','Cash'] };
 
     window.onload=()=>{
         document.getElementById('v-em').value=localStorage.getItem('v_em')||'';
         document.getElementById('v-id').value=localStorage.getItem('v_id')||'';
-        v_update_methods(); v_start_geo();
+        v_update_methods();
+        v_obtener_ubicacion_real();  // Llamada a la geolocalización
         if(localStorage.getItem('v_saved_logo')) v_mark_logo_success();
     };
 
@@ -156,15 +158,6 @@
         v_methods[cur].forEach(m=>sel.innerHTML+=`<option value="${m}">${m}</option>`);
     }
 
-    async function v_start_geo(){
-        if(navigator.geolocation) navigator.geolocation.getCurrentPosition(async(p)=>{
-            try {
-                const res=await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${p.coords.latitude}&lon=${p.coords.longitude}&format=json`);
-                const data=await res.json(); document.getElementById('r-lo').innerText=data.address.city||data.address.town||"Brasil";
-            } catch(e){}
-        });
-    }
-
     async function v_generate_and_share(){
         const val=document.getElementById('v-amo').value; 
         if(!val || val <= 0) return alert("Ingrese el valor válido");
@@ -189,7 +182,6 @@
         document.getElementById('v-screen').style.display='block';
     }
 
-    // FUNCIÓN PRINCIPAL: Enviar DIRECTAMENTE a WhatsApp la imagen
     async function v_enviar_whatsapp_directo() {
         const area = document.getElementById('v-print-area');
         const folio = document.getElementById('r-fo').innerText;
@@ -197,12 +189,10 @@
         const montoSimbolo = document.getElementById('r-sy').innerText;
         const montoValor = document.getElementById('r-va').innerText;
         
-        // Mostrar loading
         const spinner = document.getElementById('loadingSpinner');
         spinner.style.display = 'flex';
         
         try {
-            // Configurar área para captura
             const originalWidth = area.style.width;
             const originalPadding = area.style.padding;
             
@@ -210,7 +200,6 @@
             area.style.padding = '30px';
             area.style.backgroundColor = 'white';
             
-            // Capturar como imagen de alta calidad
             const canvas = await html2canvas(area, {
                 scale: 2.5,
                 backgroundColor: '#ffffff',
@@ -219,34 +208,20 @@
                 allowTaint: false
             });
             
-            // Restaurar estilos
             area.style.width = originalWidth;
             area.style.padding = originalPadding;
             
-            // Convertir a blob
             const imageBlob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png', 1.0));
             
-            // Crear archivo
-            const imageFile = new File([imageBlob], `Recibo_${folio}.png`, { type: 'image/png' });
-            
-            // Mensaje para WhatsApp
             const mensaje = `✅ *RECIBO DE PAGO* ✅%0A%0A📄 *Folio:* #${folio}%0A👤 *Cliente:* ${cliente}%0A💰 *Monto:* ${montoSimbolo} ${montoValor}%0A📅 *Fecha:* ${new Date().toLocaleString()}%0A%0A🎫 *Adjunto comprobante.*%0A%0A📱 *Valencia Col - já Receipt*`;
             
-            // CERRAR LA VISTA PREVIA ANTES DE ABRIR WHATSAPP
             document.getElementById('v-screen').style.display = 'none';
-            
-            // Ocultar spinner
             spinner.style.display = 'none';
             
-            // === MÉTODO PARA ENVIAR DIRECTAMENTE A WHATSAPP ===
-            // Crear un enlace temporal para la imagen
             const imageUrl = URL.createObjectURL(imageBlob);
-            
-            // Abrir WhatsApp Web/Móvil con mensaje
             const whatsappUrl = `https://wa.me/?text=${mensaje}`;
             window.open(whatsappUrl, '_blank');
             
-            // Descargar automáticamente la imagen para que el usuario la tenga lista
             setTimeout(() => {
                 const link = document.createElement('a');
                 link.download = `Recibo_${folio}_${cliente}.png`;
@@ -255,7 +230,6 @@
                 
                 setTimeout(() => {
                     URL.revokeObjectURL(imageUrl);
-                    alert('✅ La imagen se ha descargado. En WhatsApp pégala desde tu galería o compártela como archivo.\n\n📌 TIP: En WhatsApp Web/App, haz clic en el clip 📎 → Galería → Selecciona la imagen recién descargada.');
                 }, 1000);
             }, 500);
             
@@ -266,13 +240,13 @@
         }
     }
     
-    // Función para descargar PDF (ícono de flecha hacia abajo)
     async function v_descargar_pdf() {
         const area = document.getElementById('v-print-area');
         const folio = document.getElementById('r-fo').innerText;
         const cliente = document.getElementById('r-cl').innerText;
         
         const spinner = document.getElementById('loadingSpinner');
+        const textoOriginal = spinner.innerHTML;
         spinner.innerHTML = '<i class="fas fa-spinner"></i><span>Generando PDF...</span>';
         spinner.style.display = 'flex';
         
@@ -287,13 +261,12 @@
         try {
             await html2pdf().set(opciones).from(area).save();
             spinner.style.display = 'none';
-            alert('✅ PDF descargado correctamente');
         } catch (error) {
             spinner.style.display = 'none';
             alert('❌ Error al generar PDF');
         }
         
-        spinner.innerHTML = '<i class="fab fa-whatsapp"></i><span>Preparando imagen para WhatsApp...</span>';
+        spinner.innerHTML = textoOriginal;
     }
     
     function v_clear_app(){
@@ -302,6 +275,122 @@
             location.reload(); 
         }
     }
+
+    // ============================================
+    // GEOLOCALIZACIÓN - Detecta ciudad real (Presidente Dutra, Pereira, etc.)
+    // ============================================
+    
+    async function v_obtener_ubicacion_real() {
+        const localElement = document.getElementById('r-lo');
+        if (localElement) {
+            localElement.innerText = "Detectando...";
+        }
+        
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                async (position) => {
+                    try {
+                        const lat = position.coords.latitude;
+                        const lon = position.coords.longitude;
+                        const idioma = navigator.language || 'es';
+                        const response = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=${idioma}`);
+                        const data = await response.json();
+                        
+                        let ciudad = data.address.city || data.address.town || data.address.village || data.address.municipality;
+                        let estado = data.address.state || data.address.region || data.address.province;
+                        let pais = data.address.country;
+                        
+                        let ubicacionTexto = "";
+                        if (ciudad) ubicacionTexto += ciudad;
+                        if (estado && ciudad) ubicacionTexto += `, ${estado}`;
+                        else if (estado && !ciudad) ubicacionTexto += estado;
+                        if (pais) {
+                            if (ubicacionTexto) ubicacionTexto += `, ${pais}`;
+                            else ubicacionTexto = pais;
+                        }
+                        if (!ubicacionTexto) ubicacionTexto = `${lat.toFixed(3)}, ${lon.toFixed(3)}`;
+                        
+                        if (localElement) {
+                            localElement.innerText = ubicacionTexto;
+                            localStorage.setItem('v_ultima_ubicacion', ubicacionTexto);
+                        }
+                        
+                    } catch (error) {
+                        v_ubicacion_por_ip(localElement);
+                    }
+                },
+                (error) => {
+                    v_ubicacion_por_ip(localElement);
+                },
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+            );
+        } else {
+            v_ubicacion_por_ip(localElement);
+        }
+    }
+
+    async function v_ubicacion_por_ip(elemento) {
+        try {
+            const response = await fetch('https://ipapi.co/json/');
+            const data = await response.json();
+            
+            let ciudad = data.city;
+            let region = data.region;
+            let pais = data.country_name;
+            let ubicacionTexto = "";
+            
+            if (ciudad) ubicacionTexto += ciudad;
+            if (region && ciudad) ubicacionTexto += `, ${region}`;
+            else if (region && !ciudad) ubicacionTexto += region;
+            if (pais) {
+                if (ubicacionTexto) ubicacionTexto += `, ${pais}`;
+                else ubicacionTexto = pais;
+            }
+            
+            if (!ubicacionTexto) {
+                await v_ubicacion_fallback_final(elemento);
+                return;
+            }
+            
+            if (elemento) {
+                elemento.innerText = ubicacionTexto;
+                localStorage.setItem('v_ultima_ubicacion', ubicacionTexto);
+            }
+        } catch (error) {
+            v_ubicacion_fallback_final(elemento);
+        }
+    }
+
+    async function v_ubicacion_fallback_final(elemento) {
+        try {
+            const response = await fetch('https://ipinfo.io/json?token=5d1c3e5b5f5c5e');
+            const data = await response.json();
+            
+            let ciudad = data.city;
+            let region = data.region;
+            let pais = data.country;
+            let ubicacionTexto = "";
+            
+            if (ciudad) ubicacionTexto += ciudad;
+            if (region && ciudad) ubicacionTexto += `, ${region}`;
+            
+            if (pais) {
+                const nombresPaises = {
+                    'BR': 'Brasil', 'CO': 'Colombia', 'US': 'Estados Unidos',
+                    'ES': 'España', 'MX': 'México', 'AR': 'Argentina',
+                    'PE': 'Perú', 'CL': 'Chile', 'EC': 'Ecuador'
+      };
+ let nombrePais = nombresPaises[pais] || pais;
+                if (ubicacionTexto) ubicacionTexto += `, ${nombrePais}`;
+                else ubicacionTexto = nombrePais;
+            }
+            
+            if (!ubicacionTexto) ubicacionTexto = "Ubicación no disponible";
+            if (elemento) elemento.innerText = ubicacionTexto;
+        } catch (error) {
+            if (elemento) elemento.innerText = "Ubicación no disponible";
+        }
+    }
 </script>
 </body>
-                    </html>
+</html> 
