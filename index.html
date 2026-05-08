@@ -403,10 +403,11 @@
         a.click();
         URL.revokeObjectURL(url);
     }
- <script><style>
+</script> <style>
     /* Reduce el espacio del banner para que la app se vea compacta */
     body { padding-bottom: 30px !important; }
 </style>
+<script>
   // Registro del Service Worker para que la App funcione offline
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function() {
