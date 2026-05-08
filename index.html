@@ -404,6 +404,9 @@
         a.download = `Reporte_Contador_ValenciaCol.txt`;
         a.click();
         URL.revokeObjectURL(url);
+        // Busca esto dentro de tu función actual y agrégalo:
+let contenedor = document.getElementById('lista-historial');
+contenedor.innerHTML = "Aquí van tus recibos..."; // Esto es lo que dibuja la tabla
     }
 </script> <style>
     body { 
