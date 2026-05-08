@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title class="notranslate" translate="no">já Receipt - Valencia Col</title> 
+    <title class="notranslate" translate="no">já Receipt - ValenciaCol</title> 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
@@ -158,34 +158,68 @@
     }
 
     function v_update_methods(){
-        const cur=document.getElementById('v-cur').value;
-        const sel=document.getElementById('v-met');
-        sel.innerHTML='';
-        v_methods[cur].forEach(m=>sel.innerHTML+=`<option value="${m}">${m}</option>`);
+        const cur = document.getElementById('v-cur').value;
+        const sel = document.getElementById('v-met');
+        
+        // Esto es lo que ya tienes y funciona bien:
+        sel.innerHTML = '';
+        v_methods[cur].forEach(m => sel.innerHTML += `<option value="${m}">${m}</option>`);
+
+        // --- AQUÍ PEGAS LA INTELIGENCIA SIN DAÑAR EL DISEÑO ---
+        const txtGracias = document.getElementById('v-gracias-text');
+        const txtLeyenda = document.getElementById('v-leyenda-text');
+
+        const idiomas = {
+            'R$':  { g: 'OBRIGADO PELO SEU PAGAMENTO', l: '⚠️ ESTE DOCUMENTO NÃO É UMA FATURA FISCAL - Comprovante de controle interno.' },
+            '$':   { g: 'GRACIAS POR TU PAGO', l: '⚠️ ESTE DOCUMENTO NO ES UNA FACTURA VÁLIDA - Es un comprobante de pago simple para control interno.' },
+            'US$': { g: 'THANK YOU FOR YOUR PAYMENT', l: '⚠️ THIS DOCUMENT IS NOT A TAX INVOICE - Internal control receipt.' },
+            '€':   { g: 'MERCI POUR VOTRE PAIEMENT', l: '⚠️ CE DOCUMENT N\'EST PAS UNE FACTURE FISCALE - Justificatif de paiement.' }
+        };
+
+        const lang = idiomas[cur] || idiomas['$'];
+        if(txtGracias) txtGracias.innerText = lang.g;
+        if(txtLeyenda) txtLeyenda.innerText = lang.l;
     }
 
     async function v_generate_and_share(){
-        const val=document.getElementById('v-amo').value; 
+        const val = document.getElementById('v-amo').value; 
         if(!val || val <= 0) return alert("Ingrese el valor válido");
         
-        const f=(localStorage.getItem('v_folio_num')||'1').padStart(3,'0');
-        document.getElementById('r-em').innerText=document.getElementById('v-em').value.toUpperCase() || "EMPRESA";
-        document.getElementById('r-id').innerText=document.getElementById('v-id').value || "N/A";
-        document.getElementById('r-cl').innerText=document.getElementById('v-cli').value || "Público General";
-        document.getElementById('r-va').innerText=parseFloat(val).toLocaleString('de-DE',{minimumFractionDigits:2});
-        document.getElementById('r-co').innerText=document.getElementById('v-con').value || "Sin concepto";
-        document.getElementById('r-sy').innerText=document.getElementById('v-cur').value;
-        document.getElementById('r-me').innerText=document.getElementById('v-met').value;
-        document.getElementById('r-fo').innerText=f;
-        document.getElementById('r-da').innerText=new Date().toLocaleString();
+        // --- AQUÍ ESTÁ LA CORRECCIÓN ---
+        let numeroFolio = parseInt(localStorage.getItem('v_folio_num') || '1');
+        const f = numeroFolio.toString().padStart(3, '0'); 
+        // -------------------------------
+
+        document.getElementById('r-em').innerText = document.getElementById('v-em').value.toUpperCase() || "EMPRESA";
+        document.getElementById('r-id').innerText = document.getElementById('v-id').value || "N/A";
+        document.getElementById('r-cl').innerText = document.getElementById('v-cli').value || "Público General";
         
-        const logo=localStorage.getItem('v_saved_logo'); 
-        const i=document.getElementById('v-res-logo');
-        if(logo){ i.src=logo; i.style.display='block'; } else { i.style.display='none'; }
+        // Sigue con el resto de tu código...
+        document.getElementById('r-va').innerText = parseFloat(val).toLocaleString('de-DE',{minimumFractionDigits:2});
+        document.getElementById('r-co').innerText = document.getElementById('v-con').value || "Sin concepto";
+        document.getElementById('r-sy').innerText = document.getElementById('v-cur').value;
+        document.getElementById('r-me').innerText = document.getElementById('v-met').value;
+        document.getElementById('r-fo').innerText = f;
+        document.getElementById('r-da').innerText = new Date().toLocaleString();
         
-        localStorage.setItem('v_folio_num',parseInt(f)+1);
+        const logo = localStorage.getItem('v_saved_logo'); 
+        const imgElement = document.getElementById('v-res-logo');
+        if(logo){ imgElement.src = logo; imgElement.style.display = 'block'; } else { imgElement.style.display = 'none'; }
         
-        document.getElementById('v-screen').style.display='block';
+        // Guardamos el siguiente número
+        localStorage.setItem('v_folio_num', numeroFolio + 1);
+        
+        document.getElementById('v-screen').style.display = 'block';
+        // --- GUARDAR EN EL HISTORIAL ---
+        let historial = JSON.parse(localStorage.getItem('v_historial') || '[]');
+        historial.push({
+            folio: f,
+            cliente: document.getElementById('v-cli').value || "Público",
+            monto: document.getElementById('r-sy').innerText + " " + document.getElementById('r-va').innerText,
+            concepto: document.getElementById('v-con').value || "Sin concepto",
+            fecha: new Date().toLocaleString()
+        });
+        localStorage.setItem('v_historial', JSON.stringify(historial));
     }
 
     // ============================================
@@ -233,8 +267,7 @@
                 scale: 2.5,
                 backgroundColor: '#ffffff',
                 useCORS: true,
-                logging: false,
-                allowTaint: false
+                logging: false
             });
             
             area.style.width = originalWidth;
@@ -242,30 +275,29 @@
             
             const imageBlob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png', 1.0));
             
-            const mensaje = `✅ *RECIBO DE PAGO* ✅%0A%0A📄 *Folio:* #${folio}%0A👤 *Cliente:* ${cliente}%0A💰 *Monto:* ${montoSimbolo} ${montoValor}%0A📅 *Fecha:* ${new Date().toLocaleString()}%0A%0A🎫 *Adjunto comprobante.*%0A%0A📱 *Valencia Col - já Receipt*`;
+            // MENSAJE BLINDADO (Sin errores de declaración)
+            const textoMensaje = encodeURIComponent(`✅ *RECIBO DE PAGO* ✅\n\n📄 *Folio:* #${folio}\n👤 *Cliente:* ${cliente}\n💰 *Monto:* ${montoSimbolo} ${montoValor}\n📅 *Fecha:* ${new Date().toLocaleString()}\n\n📱 *ValenciaCol - já Receipt*`);
+            const urlFinalWA = `https://api.whatsapp.com/send?text=${textoMensaje}`;
             
             document.getElementById('v-screen').style.display = 'none';
             v_ocultar_spinner();
             
-            const imageUrl = URL.createObjectURL(imageBlob);
-            const whatsappUrl = `https://wa.me/?text=${mensaje}`;
-            window.open(whatsappUrl, '_blank');
+            window.open(urlFinalWA, '_blank');
             
+            // Descarga de respaldo de la imagen
+            const imageUrl = URL.createObjectURL(imageBlob);
             setTimeout(() => {
                 const link = document.createElement('a');
                 link.download = `Recibo_${folio}_${cliente}.png`;
                 link.href = imageUrl;
                 link.click();
-                
-                setTimeout(() => {
-                    URL.revokeObjectURL(imageUrl);
-                }, 1000);
+                setTimeout(() => URL.revokeObjectURL(imageUrl), 1000);
             }, 500);
             
         } catch (error) {
             v_ocultar_spinner();
             console.error('Error:', error);
-            alert('❌ Error al generar la imagen. Intenta de nuevo.');
+            alert('❌ Error al generar la imagen.');
         }
     }
     
@@ -294,9 +326,18 @@
     }
     
     function v_clear_app(){
-        if(confirm("Reiniciar App? Se perderán todos los datos guardados.")){ 
-            localStorage.clear(); 
-            location.reload(); 
+        const confirmar = confirm("¿Desea descargar un respaldo antes de borrar todo? (Recomendado)");
+        if(confirmar) {
+            v_exportar_todo_historial(); // Primero le damos el archivo
+            setTimeout(() => {
+                localStorage.clear();
+                location.reload();
+            }, 2000);
+        } else {
+            if(confirm("¿Seguro que desea borrar TODO sin respaldo?")){
+                localStorage.clear();
+                location.reload();
+            }
         }
     }
 
@@ -305,9 +346,10 @@
     // ============================================
     async function v_obtener_ubicacion_real() {
         const localElement = document.getElementById('r-lo');
-        if (localElement) {
-            localElement.innerText = "Detectando...";
-        }
+        if (!localElement) return;
+
+        // Paso 1: Poner nombre por defecto de inmediato
+        localElement.innerText = "Presidente Dutra"; 
         
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
@@ -315,61 +357,50 @@
                     try {
                         const lat = position.coords.latitude;
                         const lon = position.coords.longitude;
-                        const response = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`);
+                        // Usamos un tiempo de espera (timeout) para que no se quede pegado
+                        const response = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`, { signal: AbortSignal.timeout(5000) });
                         const data = await response.json();
                         
-                        let ciudad = data.address.city || data.address.town || data.address.village;
+                        let ciudad = data.address.city || data.address.town || data.address.village || data.address.state;
                         let pais = data.address.country;
-                        let ubicacionTexto = ciudad ? ciudad : "";
-                        if (pais) {
-                            if (ubicacionTexto) ubicacionTexto += `, ${pais}`;
-                            else ubicacionTexto = pais;
-                        }
-                        if (!ubicacionTexto) ubicacionTexto = "Ubicación no disponible";
                         
-                        if (localElement) localElement.innerText = ubicacionTexto;
+                        if (ciudad || pais) {
+                            localElement.innerText = (ciudad && pais) ? `${ciudad}, ${pais}` : (ciudad || pais);
+                        }
                     } catch (error) {
-                        if (localElement) localElement.innerText = "Ubicación no disponible";
+                        console.log("GPS: Usando ubicación por defecto.");
                     }
                 },
-                (error) => {
-                    if (localElement) localElement.innerText = "Ubicación no disponible";
-                }
+                (error) => console.log("GPS: Permiso denegado."),
+                { timeout: 5000 }
             );
-        } else {
-            if (localElement) localElement.innerText = "Ubicación no disponible";
         }
     }
 
     // Exportar para contador
-    function v_exportar_historial() {
-        let folio = document.getElementById('r-fo').innerText;
-        let cliente = document.getElementById('r-cl').innerText;
-        let monto = document.getElementById('r-sy').innerText + " " + document.getElementById('r-va').innerText;
-        let concepto = document.getElementById('r-co').innerText;
-        let fecha = document.getElementById('r-da').innerText;
-        let empresa = document.getElementById('v-em').value || "No registrada";
-        let nit = document.getElementById('v-id').value || "No registrado";
+    function v_exportar_todo_historial() {
+        const historial = JSON.parse(localStorage.getItem('v_historial') || '[]');
         
-        let contenido = "===== RECIBO DE PAGO =====\n\n";
-        contenido += "EMPRESA: " + empresa + "\n";
-        contenido += "NIT: " + nit + "\n";
-        contenido += "FOLIO: " + folio + "\n";
-        contenido += "CLIENTE: " + cliente + "\n";
-        contenido += "MONTO: " + monto + "\n";
-        contenido += "CONCEPTO: " + concepto + "\n";
-        contenido += "FECHA: " + fecha + "\n";
-        contenido += "\nGenerado por já Receipt - Valencia Col";
-        
-        let blob = new Blob([contenido], {type: "text/plain"});
-        let link = document.createElement("a");
-        let url = URL.createObjectURL(blob);
-        link.href = url;
-        link.download = `recibo_${folio}.txt`;
-        link.click();
+        if (historial.length === 0) return alert("No hay registros para exportar.");
+
+        let contenido = "RESUMEN DE VENTAS - VALENCIACOL\n";
+        contenido += "====================================\n\n";
+
+        historial.forEach(r => {
+            contenido += `FOLIO: #${r.folio} | FECHA: ${r.fecha}\n`;
+            contenido += `CLIENTE: ${r.cliente}\n`;
+            contenido += `CONCEPTO: ${r.concepto}\n`;
+            contenido += `VALOR: ${r.monto}\n`;
+            contenido += "------------------------------------\n";
+        });
+
+        const blob = new Blob([contenido], { type: "text/plain" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `Reporte_Contador_ValenciaCol.txt`;
+        a.click();
         URL.revokeObjectURL(url);
-        
-        alert("✅ Recibo exportado. Archivo guardado.");
     }
 </script>
 </body>
