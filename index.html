@@ -404,8 +404,16 @@
         URL.revokeObjectURL(url);
     }
 </script> <style>
-    /* Reduce el espacio del banner para que la app se vea compacta */
-    body { padding-bottom: 30px !important; }
+    body { 
+        /* Empuja toda la aplicación hacia abajo */
+        margin-top: 30px !important; 
+        
+        /* Reduce el espacio del banner al mínimo (aprox. 1cm o menos) */
+        padding-bottom: 15px !important; 
+        
+        /* Asegura que el fondo negro cubra todo el espacio */
+        background-color: #000000 !important;
+    }
 </style>
 <script>
   // Registro del Service Worker para que la App funcione offline
