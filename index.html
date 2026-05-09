@@ -1,221 +1,838 @@
-        // --- GUARDAR EN EL HISTORIAL ---
-        let historial = JSON.parse(localStorage.getItem('v_historial') || '[]');
-        historial.push({
-            folio: f,
-            cliente: document.getElementById('v-cli').value || "Público",
-            monto: document.getElementById('r-sy').innerText + " " + document.getElementById('r-va').innerText,
-            concepto: document.getElementById('v-con').value || "Sin concepto",
-            fecha: new Date().toLocaleString()
-        });
-        localStorage.setItem('v_historial', JSON.stringify(historial));
-    }
+        <!DOCTYPE html>
+<html lang="pt" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title class="notranslate" translate="no">já Receipt - ValenciaCol</title> 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="manifest" href="manifest.json">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
-    // ============================================
-    // SPINNER TEMPORAL (sin errores)
-    // ============================================
-    function v_mostrar_spinner(mensaje) {
-        let spinner = document.getElementById('loadingSpinner');
-        if (!spinner) {
-            spinner = document.createElement('div');
-            spinner.id = 'loadingSpinner';
-            spinner.style.cssText = 'position:fixed; bottom:30px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.8); padding:10px 20px; border-radius:50px; z-index:9999; display:flex; align-items:center; gap:10px; backdrop-filter:blur(5px);';
-            spinner.innerHTML = '<i class="fas fa-spinner fa-pulse" style="color:white; font-size:18px;"></i><span style="color:white; font-size:13px;">' + mensaje + '</span>';
-            document.body.appendChild(spinner);
-        } else {
-            spinner.style.display = 'flex';
-            spinner.querySelector('span').innerText = mensaje;
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-    }
+        
+        :root { 
+            --b:#0f0f0f; 
+            --c:#1a1a1a; 
+            --m:#3498db; 
+            --g:#f1c40f; 
+            --t:#ffffff; 
+            --ok:#27ae60; 
+            --danger:#e74c3c;
+            --whatsapp:#25D366;
+        }
+        
+        body {
+            background: var(--b);
+            color: white;
+            font-family: 'Segoe UI', sans-serif;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        /* Engranaje */
+        .v-gear {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            font-size: 28px;
+            color: var(--g);
+            z-index: 1001;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+            background: rgba(0,0,0,0.5);
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .v-gear.active {
+            transform: rotate(180deg);
+        }
+        
+        /* Menú flotante */
+        .v-menu {
+            display: none;
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            background: var(--c);
+            border: 1px solid #333;
+            border-radius: 15px;
+            z-index: 1000;
+            width: 260px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.9);
+            overflow: hidden;
+        }
+        .v-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 18px;
+            color: white;
+            text-decoration: none;
+            border-bottom: 1px solid #2a2a2a;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .v-item:hover {
+            background: #2a2a2a;
+        }
+        .v-item:active {
+            background: #333;
+        }
+        .v-item:last-child {
+            border-bottom: none;
+            color: #ff4757;
+        }
+        .v-item i {
+            width: 24px;
+            font-size: 16px;
+        }
+        
+        /* Header */
+        .v-header {
+            text-align: center;
+            margin: 20px 0 30px;
+        }
+        .v-title {
+            font-size: 32px;
+            font-weight: 800;
+            color: var(--m);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+        
+        /* Cards */
+        .v-card {
+            background: var(--c);
+            padding: 20px;
+            border-radius: 20px;
+            border: 1px solid #2a2a2a;
+            margin-bottom: 15px;
+        }
+        
+        /* Inputs */
+        input, select {
+            width: 100%;
+            padding: 12px 15px;
+            background: #252525;
+            border: 1px solid #333;
+            border-radius: 10px;
+            color: white;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--m);
+        }
+        
+        /* Upload logo */
+        .v-upload {
+            background: var(--m);
+            color: white !important;
+            padding: 12px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: bold;
+            text-align: center;
+            display: block;
+            transition: all 0.3s ease;
+            margin-top: 5px;
+        }
+        .v-success {
+            background: var(--ok) !important;
+        }
+        
+        /* Botón principal */
+        .v-btn {
+            background: var(--m);
+            color: white;
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            font-size: 16px;
+            transition: transform 0.2s, background 0.2s;
+        }
+        .v-btn:active {
+            transform: scale(0.98);
+        }
+        
+        /* Pantalla de recibo */
+        #v-screen {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: white;
+            z-index: 2000;
+            overflow-y: auto;
+            padding: 20px;
+        }
+        
+        /* Toolbar del recibo */
+        .v-toolbar {
+            display: flex;
+            justify-content: flex-end;
+            gap: 30px;
+            margin-bottom: 20px;
+            position: sticky;
+            top: 0;
+            background: white;
+            padding: 10px 0;
+            z-index: 10;
+        }
+        .v-toolbar i {
+            cursor: pointer;
+            transition: transform 0.2s;
+            font-size: 35px;
+        }
+        .v-toolbar i:active {
+            transform: scale(0.9);
+        }
+        
+        /* Área del recibo */
+        #v-print-area {
+            color: black !important;
+            padding: 20px;
+            background: white;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .v-val-box {
+            position: relative;
+            text-align: center;
+            border: 2px solid #000;
+            padding: 25px;
+            margin: 20px 0;
+            background: #f9f9f9;
+        }
+        .v-val-txt {
+            font-size: 38px;
+            margin: 0;
+            font-weight: 900;
+            color: black;
+            position: relative;
+            z-index: 2;
+        }
+        .v-mark {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-15deg);
+            font-size: 50px;
+            color: rgba(0,0,0,0.06);
+            font-weight: 900;
+            white-space: nowrap;
+        }
+        
+        /* Pantalla de historial */
+        #v-history-screen {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--b);
+            z-index: 2000;
+            overflow-y: auto;
+            padding: 20px;
+        }
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #333;
+            position: sticky;
+            top: 0;
+            background: var(--b);
+            z-index: 10;
+        }
+        .history-header h2 {
+            color: var(--g);
+            margin: 0;
+            font-size: 22px;
+        }
+        .history-header i {
+            font-size: 28px;
+            color: var(--g);
+            cursor: pointer;
+        }
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .history-item {
+            background: var(--c);
+            padding: 15px;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-left: 4px solid var(--m);
+        }
+        .history-item:active {
+            background: #2a2a2a;
+            transform: scale(0.99);
+        }
+        .history-folio {
+            font-weight: bold;
+            color: var(--g);
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+        .history-date {
+            font-size: 11px;
+            color: #888;
+            margin-top: 5px;
+        }
+        .history-amount {
+            font-size: 18px;
+            font-weight: bold;
+            margin: 8px 0 4px;
+        }
+        .history-client {
+            font-size: 12px;
+            color: #aaa;
+        }
+        .empty-history {
+            text-align: center;
+            padding: 50px;
+            color: #888;
+        }
+        
+        /* Spinner */
+        .loading-spinner {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.9);
+            padding: 12px 25px;
+            border-radius: 50px;
+            z-index: 9999;
+            display: none;
+            align-items: center;
+            gap: 12px;
+            backdrop-filter: blur(5px);
+        }
+        .loading-spinner i {
+            font-size: 20px;
+            color: var(--g);
+            animation: spin 1s linear infinite;
+        }
+        .loading-spinner span {
+            color: white;
+            font-size: 13px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Leyenda del recibo */
+        #v-leyenda-recibo {
+            margin-top: 25px;
+            background: #fef9e6;
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+            border: 1px solid #f1c40f;
+        }
+        
+        /* Grupos de inputs */
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .input-group select {
+            flex: 1;
+            margin-bottom: 0;
+        }
+        
+        /* Etiquetas */
+        .label-small {
+            font-size: 10px;
+            color: var(--m);
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
 
-    function v_ocultar_spinner() {
-        let spinner = document.getElementById('loadingSpinner');
-        if (spinner) {
-            spinner.style.display = 'none';
-        }
-    }
+    <!-- Engranaje -->
+    <i class="fas fa-cog v-gear" id="gear-icon" onclick="v_toggle_m(event)"></i>
 
-    async function v_enviar_whatsapp_directo() {
-        const area = document.getElementById('v-print-area');
-        const folio = document.getElementById('r-fo').innerText;
-        const cliente = document.getElementById('r-cl').innerText;
-        const montoSimbolo = document.getElementById('r-sy').innerText;
-        const montoValor = document.getElementById('r-va').innerText;
-        
-        v_mostrar_spinner("Procesando imagen...");
-        
-        try {
-            const originalWidth = area.style.width;
-            const originalPadding = area.style.padding;
-            
-            area.style.width = '600px';
-            area.style.padding = '30px';
-            area.style.backgroundColor = 'white';
-            
-            const canvas = await html2canvas(area, {
-                scale: 2.5,
-                backgroundColor: '#ffffff',
-                useCORS: true,
-                logging: false
-            });
-            
-            area.style.width = originalWidth;
-            area.style.padding = originalPadding;
-            
-            const imageBlob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png', 1.0));
-            
-            // MENSAJE BLINDADO (Sin errores de declaración)
-            const textoMensaje = encodeURIComponent(`✅ *RECIBO DE PAGO* ✅\n\n📄 *Folio:* #${folio}\n👤 *Cliente:* ${cliente}\n💰 *Monto:* ${montoSimbolo} ${montoValor}\n📅 *Fecha:* ${new Date().toLocaleString()}\n\n📱 *ValenciaCol - já Receipt*`);
-            const urlFinalWA = `https://api.whatsapp.com/send?text=${textoMensaje}`;
-            
-            document.getElementById('v-screen').style.display = 'none';
-            v_ocultar_spinner();
-            
-            window.open(urlFinalWA, '_blank');
-            
-            // Descarga de respaldo de la imagen
-            const imageUrl = URL.createObjectURL(imageBlob);
-            setTimeout(() => {
-                const link = document.createElement('a');
-                link.download = `Recibo_${folio}_${cliente}.png`;
-                link.href = imageUrl;
-                link.click();
-                setTimeout(() => URL.revokeObjectURL(imageUrl), 1000);
-            }, 500);
-            
-        } catch (error) {
-            v_ocultar_spinner();
-            console.error('Error:', error);
-            alert('❌ Error al generar la imagen.');
-        }
-    }
-    
-    async function v_descargar_pdf() {
-        const area = document.getElementById('v-print-area');
-        const folio = document.getElementById('r-fo').innerText;
-        const cliente = document.getElementById('r-cl').innerText;
-        
-        v_mostrar_spinner("Generando PDF...");
-        
-        const opciones = {
-            margin: 10,
-            filename: `Recibo_${folio}_${cliente}.pdf`,
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 3, useCORS: true },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    <!-- Menú flotante -->
+    <div id="main-menu" class="v-menu" onclick="event.stopPropagation()">
+        <div class="v-item" onclick="window.open('https://docs.google.com/document/d/12PwE8n7WyRm1DFxLKub4a8YqVxI4m9MEXNQfEG6mVBs/edit?usp=drivesdk', '_blank')">
+            <i class="fas fa-user-shield"></i> Política de Privacidade
+        </div>
+        <div class="v-item" onclick="v_abrir_historial()">
+            <i class="fas fa-list-ul"></i> Registro Histórico
+        </div>
+        <div class="v-item" onclick="window.open('https://valenciacol.carrd.co/#historia', '_blank')">
+            <i class="fas fa-book-open"></i> Nossa História
+        </div>
+        <div class="v-item" onclick="window.open('https://valenciacol.carrd.co/#work', '_blank')">
+            <i class="fas fa-mobile-alt"></i> Mais Apps
+        </div>
+        <div class="v-item" onclick="v_exportar_todo_historial()">
+            <i class="fas fa-file-excel"></i> Exportar para contador
+        </div>
+        <div class="v-item" onclick="v_clear_app()">
+            <i class="fas fa-power-off"></i> Reiniciar Aplicación
+        </div>
+    </div>
+
+    <!-- Header -->
+    <div class="v-header">
+        <div class="v-title">
+            <i class="fas fa-bolt" style="color:var(--g)"></i> já Receipt
+        </div>
+        <div style="font-size:10px;color:#777;text-align:center;margin-top:5px;">
+            &copy; 2026 ValenciaCol • Innovative Solutions
+        </div>
+    </div>
+
+    <!-- Configuración -->
+    <div class="v-card">
+        <span class="label-small">CONFIGURACIÓN INICIAL</span>
+        <input type="text" id="v-em" placeholder="Nombre de Empresa">
+        <input type="tel" id="v-id" placeholder="NIT / CPF / Identificación">
+        <div id="v-label-logo" class="v-upload" onclick="document.getElementById('v-file').click()">
+            <i class="fas fa-cloud-upload-alt"></i> ADICIONAR LOGO
+        </div>
+        <input type="file" id="v-file" accept="image/*" style="display:none;">
+    </div>
+
+    <!-- Datos del recibo -->
+    <div class="v-card">
+        <span class="label-small">DATOS DEL RECIBO</span>
+        <input type="text" id="v-con" placeholder="Concepto (Ej: Venta de Nevera)">
+        <input type="text" id="v-cli" placeholder="Nombre del Cliente">
+        <input type="number" id="v-amo" placeholder="Valor (0.00)">
+        <div class="input-group">
+            <select id="v-cur">
+                <option value="$">Peso ($)</option>
+                <option value="R$">Real (R$)</option>
+                <option value="€">Euro (€)</option>
+                <option value="US$">Dólar (US$)</option>
+            </select>
+            <select id="v-met"></select>
+        </div>
+        <button class="v-btn" onclick="v_generate_and_share()">GERAR RECIBO</button>
+    </div>
+
+    <!-- Pantalla de recibo -->
+    <div id="v-screen">
+        <div class="v-toolbar">
+            <i class="fab fa-whatsapp" onclick="v_enviar_whatsapp()" style="color:#25d366;"></i>
+            <i class="fas fa-download" onclick="v_descargar_pdf()" style="color:#3498db;"></i>
+            <i class="fas fa-times" onclick="document.getElementById('v-screen').style.display='none'" style="color:black;"></i>
+        </div>
+        <div id="v-print-area">
+            <div style="text-align:center;border-bottom:3px solid #000;padding-bottom:15px;margin-bottom:20px;">
+                <img id="v-res-logo" src="" style="max-height:140px;max-width:280px;display:none;margin:0 auto 10px;object-fit:contain;">
+                <h2 style="margin:0;font-weight:900;text-transform:uppercase;">Recibo de Pagamento</h2>
+                <small>Emitido por • já Receipt</small>
+            </div>
+            <p><b>EMISSOR:</b> <span id="r-em"></span> <span style="float:right;"><b>FOLIO:</b> #<span id="r-fo"></span></span></p>
+            <p><b>ID/NIT:</b> <span id="r-id"></span></p>
+            <div class="v-val-box">
+                <div class="v-mark">ORIGINAL</div>
+                <h1 class="v-val-txt"><span id="r-sy"></span> <span id="r-va"></span></h1>
+            </div>
+            <p><b>RECEBEMOS DE:</b> <span id="r-cl"></span></p>
+            <p><b>REFERENTE A:</b> <span id="r-co"></span></p>
+            <p><b>FORMA DE PAGO:</b> <span id="r-me"></span></p>
+            <p style="text-align:right;margin-top:40px;font-size:12px;border-top:1px solid #ddd;padding-top:10px;">
+                <b>Local:</b> <span id="r-lo">Detectando...</span> | <span id="r-da"></span>
+            </p>
+            <div id="v-leyenda-recibo">
+                <div style="font-size: 11px; color: #b8860b;">
+                    <i class="fas fa-info-circle"></i> <strong id="v-gracias-text">GRACIAS POR TU PAGO</strong>
+                </div>
+                <div id="v-leyenda-text" style="font-size: 10px; color: #8b6914; margin-top: 5px;">
+                    ⚠️ ESTE DOCUMENTO NO ES UNA FACTURA VÁLIDA - Es un comprobante de pago simple para control interno.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pantalla de historial -->
+    <div id="v-history-screen">
+        <div class="history-header">
+            <h2><i class="fas fa-history"></i> Historial de Recibos</h2>
+            <i class="fas fa-times" onclick="document.getElementById('v-history-screen').style.display='none'"></i>
+        </div>
+        <div id="history-list-container" class="history-list"></div>
+    </div>
+
+    <!-- Spinner -->
+    <div id="loadingSpinner" class="loading-spinner">
+        <i class="fas fa-spinner fa-pulse"></i>
+        <span>Procesando...</span>
+    </div>
+
+    <script>
+        // ============================================
+        // CONFIGURACIÓN INICIAL
+        // ============================================
+        const v_methods = { 
+            '$': ['Nequi', 'Daviplata', 'Efectivo'], 
+            'R$': ['Pix', 'Dinheiro', 'Cartão'], 
+            '€': ['Virement', 'Carte', 'Espèces'], 
+            'US$': ['Zelle', 'Cash', 'Venmo'] 
         };
         
-        try {
-            await html2pdf().set(opciones).from(area).save();
-            v_ocultar_spinner();
-        } catch (error) {
-            v_ocultar_spinner();
-            alert('❌ Error al generar PDF');
-        }
-    }
-    
-    function v_clear_app(){
-        const confirmar = confirm("¿Desea descargar un respaldo antes de borrar todo? (Recomendado)");
-        if(confirmar) {
-            v_exportar_todo_historial(); // Primero le damos el archivo
-            setTimeout(() => {
-                localStorage.clear();
-                location.reload();
-            }, 2000);
-        } else {
-            if(confirm("¿Seguro que desea borrar TODO sin respaldo?")){
-                localStorage.clear();
-                location.reload();
-            }
-        }
-    }
-
-    // ============================================
-    // GEOLOCALIZACIÓN
-    // ============================================
-    async function v_obtener_ubicacion_real() {
-        const localElement = document.getElementById('r-lo');
-        if (!localElement) return;
-
-        // Paso 1: Poner nombre por defecto de inmediato
-        localElement.innerText = "Presidente Dutra"; 
+        const idiomas = {
+            'R$':  { g: 'OBRIGADO PELO SEU PAGAMENTO', l: '⚠️ ESTE DOCUMENTO NÃO É UMA FATURA FISCAL - Comprovante de controle interno.' },
+            '$':   { g: 'GRACIAS POR TU PAGO', l: '⚠️ ESTE DOCUMENTO NO ES UNA FACTURA VÁLIDA - Es un comprobante de pago simple para control interno.' },
+            'US$': { g: 'THANK YOU FOR YOUR PAYMENT', l: '⚠️ THIS DOCUMENT IS NOT A TAX INVOICE - Internal control receipt.' },
+            '€':   { g: 'MERCI POUR VOTRE PAIEMENT', l: '⚠️ CE DOCUMENT N\'EST PAS UNE FACTURE FISCALE - Justificatif de paiement.' }
+        };
         
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                async (position) => {
+        // Cargar datos guardados
+        window.onload = () => {
+            document.getElementById('v-em').value = localStorage.getItem('v_em') || '';
+            document.getElementById('v-id').value = localStorage.getItem('v_id') || '';
+            v_update_methods();
+            v_obtener_ubicacion();
+            if(localStorage.getItem('v_saved_logo')) {
+                document.getElementById('v-label-logo').classList.add('v-success');
+                document.getElementById('v-label-logo').innerHTML = '<i class="fas fa-check-double"></i> ¡LOGO SUBIDO! ✅';
+            }
+            if(!localStorage.getItem('v_historial')) localStorage.setItem('v_historial', JSON.stringify([]));
+            if(!localStorage.getItem('v_folio_num')) localStorage.setItem('v_folio_num', '1');
+        };
+        
+        // ============================================
+        // FUNCIONES DEL MENÚ
+        // ============================================
+        function v_toggle_m(e) { 
+            e.stopPropagation(); 
+            const gear = document.getElementById('gear-icon'); 
+            gear.classList.toggle('active'); 
+            const menu = document.getElementById('main-menu'); 
+            menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+        }
+        
+        function v_hide_m() { 
+            const menu = document.getElementById('main-menu');
+            const gear = document.getElementById('gear-icon');
+            if(menu) menu.style.display = 'none';
+            if(gear) gear.classList.remove('active');
+        }
+        
+        document.addEventListener('click', function(e) {
+            const menu = document.getElementById('main-menu');
+            const gear = document.getElementById('gear-icon');
+            if(menu && menu.style.display === 'block' && !gear.contains(e.target) && !menu.contains(e.target)) {
+                v_hide_m();
+            }
+        });
+        
+        // ============================================
+        // FUNCIONES DEL RECIBO
+        // ============================================
+        function v_update_methods() {
+            const cur = document.getElementById('v-cur').value;
+            const sel = document.getElementById('v-met');
+            sel.innerHTML = '';
+            v_methods[cur].forEach(m => sel.innerHTML += `<option value="${m}">${m}</option>`);
+            
+            const txtGracias = document.getElementById('v-gracias-text');
+            const txtLeyenda = document.getElementById('v-leyenda-text');
+            const lang = idiomas[cur] || idiomas['$'];
+            if(txtGracias) txtGracias.innerText = lang.g;
+            if(txtLeyenda) txtLeyenda.innerText = lang.l;
+        }
+        
+        document.getElementById('v-cur').addEventListener('change', v_update_methods);
+        document.getElementById('v-em').addEventListener('input', (e) => localStorage.setItem('v_em', e.target.value));
+        document.getElementById('v-id').addEventListener('input', (e) => {
+            e.target.value = e.target.value.replace(/[^0-9]/g, '').slice(0, 20);
+            localStorage.setItem('v_id', e.target.value);
+        });
+        
+        document.getElementById('v-file').addEventListener('change', function(e) {
+            if(e.target.files && e.target.files[0]) {
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    localStorage.setItem('v_saved_logo', ev.target.result);
+                    const label = document.getElementById('v-label-logo');
+                    label.classList.add('v-success');
+                    label.innerHTML = '<i class="fas fa-check-double"></i> ¡LOGO SUBIDO! ✅';
+                };
+                reader.readAsDataURL(e.target.files[0]);
+            }
+        });
+        
+        async function v_obtener_ubicacion() {
+            const localElement = document.getElementById('r-lo');
+            if(!localElement) return;
+            localElement.innerText = "Presidente Dutra, Brasil";
+            
+            if(navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(async (position) => {
                     try {
                         const lat = position.coords.latitude;
                         const lon = position.coords.longitude;
-                        // Usamos un tiempo de espera (timeout) para que no se quede pegado
                         const response = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`, { signal: AbortSignal.timeout(5000) });
                         const data = await response.json();
-                        
-                        let ciudad = data.address.city || data.address.town || data.address.village || data.address.state;
+                        let ciudad = data.address.city || data.address.town || data.address.village;
                         let pais = data.address.country;
-                        
-                        if (ciudad || pais) {
-                            localElement.innerText = (ciudad && pais) ? `${ciudad}, ${pais}` : (ciudad || pais);
-                        }
-                    } catch (error) {
-                        console.log("GPS: Usando ubicación por defecto.");
-                    }
-                },
-                (error) => console.log("GPS: Permiso denegado."),
-                { timeout: 5000 }
-            );
+                        if(ciudad || pais) localElement.innerText = (ciudad && pais) ? `${ciudad}, ${pais}` : (ciudad || pais);
+                    } catch(e) { console.log("Error de geolocalización"); }
+                }, () => {}, { timeout: 5000 });
+            }
         }
-    }
-
-    // Exportar para contador
-    function v_exportar_todo_historial() {
-        const historial = JSON.parse(localStorage.getItem('v_historial') || '[]');
         
-        if (historial.length === 0) return alert("No hay registros para exportar.");
-
-        let contenido = "RESUMEN DE VENTAS - VALENCIACOL\n";
-        contenido += "====================================\n\n";
-
-        historial.forEach(r => {
-            contenido += `FOLIO: #${r.folio} | FECHA: ${r.fecha}\n`;
-            contenido += `CLIENTE: ${r.cliente}\n`;
-            contenido += `CONCEPTO: ${r.concepto}\n`;
-            contenido += `VALOR: ${r.monto}\n`;
-            contenido += "------------------------------------\n";
-        });
-
-        const blob = new Blob([contenido], { type: "text/plain" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `Reporte_Contador_ValenciaCol.txt`;
-        a.click();
-        URL.revokeObjectURL(url);
-        // Busca esto dentro de tu función actual y agrégalo:
-let contenedor = document.getElementById('lista-historial');
-contenedor.innerHTML = "Aquí van tus recibos..."; // Esto es lo que dibuja la tabla
-    }
-</script> <style>
-    body { 
-        /* Empuja toda la aplicación hacia abajo */
-        margin-top: 30px !important; 
+        function v_mostrar_spinner(msg) {
+            const spinner = document.getElementById('loadingSpinner');
+            spinner.querySelector('span').innerText = msg;
+            spinner.style.display = 'flex';
+        }
         
-        /* Reduce el espacio del banner al mínimo (aprox. 1cm o menos) */
-        padding-bottom: 15px !important; 
+        function v_ocultar_spinner() {
+            document.getElementById('loadingSpinner').style.display = 'none';
+        }
         
-        /* Asegura que el fondo negro cubra todo el espacio */
-        background-color: #000000 !important;
-    }
-</style>
-<script>
-  // Registro del Service Worker para que la App funcione offline
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', function() {
-      navigator.serviceWorker.register('/sw.js').then(function(registration) {
-        console.log('ServiceWorker registrado con éxito');
-      }, function(err) {
-        console.log('Error al registrar el ServiceWorker: ', err);
-      });
-    });
-  }
-</script>
+        async function v_generate_and_share() {
+            const val = document.getElementById('v-amo').value;
+            if(!val || val <= 0) return alert("Ingrese el valor válido");
+            
+            let numeroFolio = parseInt(localStorage.getItem('v_folio_num') || '1');
+            const folio = numeroFolio.toString().padStart(3, '0');
+            
+            const empresa = document.getElementById('v-em').value.toUpperCase() || "EMPRESA";
+            const nit = document.getElementById('v-id').value || "N/A";
+            const cliente = document.getElementById('v-cli').value || "Público General";
+            const montoValor = parseFloat(val).toLocaleString('de-DE', {minimumFractionDigits:2});
+            const concepto = document.getElementById('v-con').value || "Sin concepto";
+            const simbolo = document.getElementById('v-cur').value;
+            const metodo = document.getElementById('v-met').value;
+            const fecha = new Date().toLocaleString();
+            const ubicacion = document.getElementById('r-lo').innerText;
+            const logo = localStorage.getItem('v_saved_logo');
+            
+            // Guardar en historial
+            const recibo = {
+                folio, empresa, nit, cliente, montoValor, montoNumero: parseFloat(val),
+                concepto, simbolo, metodo, fecha, ubicacion, logo,
+                timestamp: Date.now()
+            };
+            
+            let historial = JSON.parse(localStorage.getItem('v_historial') || '[]');
+            historial.unshift(recibo);
+            if(historial.length > 50) historial = historial.slice(0, 50);
+            localStorage.setItem('v_historial', JSON.stringify(historial));
+            localStorage.setItem('v_folio_num', numeroFolio + 1);
+            
+            // Mostrar en pantalla
+            document.getElementById('r-em').innerText = empresa;
+            document.getElementById('r-id').innerText = nit;
+            document.getElementById('r-cl').innerText = cliente;
+            document.getElementById('r-va').innerText = montoValor;
+            document.getElementById('r-co').innerText = concepto;
+            document.getElementById('r-sy').innerText = simbolo;
+            document.getElementById('r-me').innerText = metodo;
+            document.getElementById('r-fo').innerText = folio;
+            document.getElementById('r-da').innerText = fecha;
+            document.getElementById('r-lo').innerText = ubicacion;
+            
+            const img = document.getElementById('v-res-logo');
+            if(logo) { img.src = logo; img.style.display = 'block'; }
+            else { img.style.display = 'none'; }
+            
+            document.getElementById('v-screen').style.display = 'block';
+        }
+        
+        async function v_enviar_whatsapp() {
+            const area = document.getElementById('v-print-area');
+            const folio = document.getElementById('r-fo').innerText;
+            const cliente = document.getElementById('r-cl').innerText;
+            const simbolo = document.getElementById('r-sy').innerText;
+            const valor = document.getElementById('r-va').innerText;
+            
+            v_mostrar_spinner("Generando imagen...");
+            
+            try {
+                const originalWidth = area.style.width;
+                area.style.width = '600px';
+                area.style.backgroundColor = 'white';
+                
+                const canvas = await html2canvas(area, { scale: 2.5, backgroundColor: '#ffffff', useCORS: true });
+                
+                area.style.width = originalWidth;
+                
+                const texto = encodeURIComponent(`✅ *RECIBO DE PAGO* ✅\n\n📄 Folio: #${folio}\n👤 Cliente: ${cliente}\n💰 Monto: ${simbolo} ${valor}\n📅 Fecha: ${new Date().toLocaleString()}\n\n📱 ValenciaCol - já Receipt`);
+                
+                v_ocultar_spinner();
+                document.getElementById('v-screen').style.display = 'none';
+                window.open(`https://api.whatsapp.com/send?text=${texto}`, '_blank');
+                
+            } catch(error) {
+                v_ocultar_spinner();
+                alert('❌ Error al generar la imagen');
+            }
+        }
+        
+        async function v_descargar_pdf() {
+            const area = document.getElementById('v-print-area');
+            const folio = document.getElementById('r-fo').innerText;
+            const cliente = document.getElementById('r-cl').innerText;
+            
+            v_mostrar_spinner("Generando PDF...");
+            
+            try {
+                await html2pdf().set({
+                    margin: 10,
+                    filename: `Recibo_${folio}_${cliente}.pdf`,
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: { scale: 3, useCORS: true },
+                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                }).from(area).save();
+                v_ocultar_spinner();
+            } catch(error) {
+                v_ocultar_spinner();
+                alert('❌ Error al generar PDF');
+            }
+        }
+        
+        // ============================================
+        // FUNCIONES DEL HISTORIAL
+        // ============================================
+        function v_abrir_historial() {
+            const historial = JSON.parse(localStorage.getItem('v_historial') || '[]');
+            const container = document.getElementById('history-list-container');
+            
+            if(historial.length === 0) {
+                container.innerHTML = '<div class="empty-history"><i class="fas fa-receipt" style="font-size:48px;margin-bottom:15px;display:block;"></i>No hay recibos generados aún.<br>¡Crea tu primer recibo!</div>';
+            } else {
+                container.innerHTML = '';
+                historial.forEach(recibo => {
+                    const item = document.createElement('div');
+                    item.className = 'history-item';
+                    item.onclick = () => v_ver_recibo(recibo);
+                    item.innerHTML = `
+                        <div class="history-folio"><i class="fas fa-hashtag"></i> ${recibo.folio}</div>
+                        <div class="history-amount">${recibo.simbolo} ${recibo.montoValor}</div>
+                        <div class="history-client"><i class="fas fa-user"></i> ${recibo.cliente}</div>
+                        <div class="history-date"><i class="far fa-calendar-alt"></i> ${recibo.fecha}</div>
+                    `;
+                    container.appendChild(item);
+                });
+            }
+            
+            document.getElementById('v-history-screen').style.display = 'block';
+            v_hide_m();
+        }
+        
+        function v_ver_recibo(recibo) {
+            document.getElementById('r-em').innerText = recibo.empresa;
+            document.getElementById('r-id').innerText = recibo.nit;
+            document.getElementById('r-cl').innerText = recibo.cliente;
+            document.getElementById('r-va').innerText = recibo.montoValor;
+            document.getElementById('r-co').innerText = recibo.concepto;
+            document.getElementById('r-sy').innerText = recibo.simbolo;
+            document.getElementById('r-me').innerText = recibo.metodo;
+            document.getElementById('r-fo').innerText = recibo.folio;
+            document.getElementById('r-da').innerText = recibo.fecha;
+            document.getElementById('r-lo').innerText = recibo.ubicacion || "Presidente Dutra, Brasil";
+            
+            const img = document.getElementById('v-res-logo');
+            if(recibo.logo) { img.src = recibo.logo; img.style.display = 'block'; }
+            else { img.style.display = 'none'; }
+            
+            const lang = idiomas[recibo.simbolo] || idiomas['$'];
+            document.getElementById('v-gracias-text').innerText = lang.g;
+            document.getElementById('v-leyenda-text').innerText = lang.l;
+            
+            document.getElementById('v-history-screen').style.display = 'none';
+            document.getElementById('v-screen').style.display = 'block';
+        }
+        
+        function v_exportar_todo_historial() {
+            const historial = JSON.parse(localStorage.getItem('v_historial') || '[]');
+            if(historial.length === 0) return alert("No hay registros para exportar.");
+            
+            let contenido = "RESUMEN DE VENTAS - VALENCIACOL\n";
+            contenido += "====================================\n\n";
+            contenido += `FECHA EXPORTACIÓN: ${new Date().toLocaleString()}\n`;
+            contenido += `TOTAL DE RECIBOS: ${historial.length}\n\n`;
+            contenido += "------------------------------------\n\n";
+            
+            historial.forEach(r => {
+                contenido += `FOLIO: #${r.folio}\n`;
+                contenido += `FECHA: ${r.fecha}\n`;
+                contenido += `CLIENTE: ${r.cliente}\n`;
+                contenido += `CONCEPTO: ${r.concepto}\n`;
+                contenido += `VALOR: ${r.simbolo} ${r.montoValor}\n`;
+                contenido += `MÉTODO: ${r.metodo}\n`;
+                contenido += "------------------------------------\n\n";
+            });
+            
+            const blob = new Blob([contenido], { type: "text/plain;charset=utf-8" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `Reporte_Contador_ValenciaCol_${Date.now()}.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+            alert("✅ Reporte exportado con éxito");
+        }
+        
+        function v_clear_app() {
+            if(confirm("⚠️ ¿DESCARGAR RESPALDO ANTES DE BORRAR? (Recomendado)")) {
+                v_exportar_todo_historial();
+                setTimeout(() => {
+                    if(confirm("¿Seguro que deseas BORRAR TODOS LOS DATOS?")) {
+                        localStorage.clear();
+                        location.reload();
+                    }
+                }, 1000);
+            } else {
+                if(confirm("¿Seguro que deseas BORRAR TODO sin respaldo?")) {
+                    localStorage.clear();
+                    location.reload();
+                }
+            }
+        }
+        
+        // Service Worker
+        if('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW error:', err));
+            });
+        }
+    </script>
 </body>
 </html>
