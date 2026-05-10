@@ -1,4 +1,4 @@
-        <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt" translate="no">
 <head>
     <meta charset="UTF-8">
@@ -8,7 +8,9 @@
     <link rel="manifest" href="manifest.json">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-
+    <!-- Google AdMob - ValenciaCol -->
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-TU_ID_AQUI"
+     crossorigin="anonymous"></script>
     <style>
         * {
             margin: 0;
@@ -382,6 +384,27 @@
             display: block;
             margin-bottom: 5px;
         }
+       /* Banner fijo AdMob - jane Receipt */
+.admob-banner {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background-color: transparent;
+    text-align: center;
+    z-index: 999;
+    padding: 5px 0;
+}
+
+body {
+    padding-bottom: 80px !important;
+}
+
+@media (max-width: 600px) {
+    body {
+        padding-bottom: 70px !important;
+    }
+}     
     </style>
 </head>
 <body>
@@ -834,5 +857,15 @@
             });
         }
     </script>
+        <!-- Banner AdMob fijo abajo -->
+<div class="admob-banner">
+    <ins class="adsbygoogle"
+         style="display:inline-block;width:320px;height:50px"
+         data-ad-client="ca-pub-TU_ID_AQUI"
+         data-ad-slot="TU_ID_BANNER"></ins>
+    <script>
+        (adsbygoogle = window.adsbygoogle || []).push({});
+    </script>
+</div>
 </body>
 </html>
