@@ -733,35 +733,23 @@ body {
         // ============================================
         async function v_descargar_pdf() {
     const area = document.getElementById('v-print-area');
-    const folio = document.getElementById('r-fo').innerText;
-    const cliente = document.getElementById('r-cl').innerText;
     
-    v_mostrar_spinner("Generando PDF...");
+    v_mostrar_spinner("Generando imagen...");
     
     try {
-        const opt = {
-            margin: [10, 10, 10, 10],
-            filename: `Recibo_${folio}_${cliente}.pdf`,
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 3, useCORS: true },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-        };
-        
-        const worker = html2pdf().set(opt).from(area);
-        const pdf = await worker.outputPdf();
-        const blob = await pdf.output('blob');
-        const url = URL.createObjectURL(blob);
+        const canvas = await html2canvas(area, {
+            scale: 2,
+            backgroundColor: '#ffffff',
+            useCORS: true
+        });
         
         const link = document.createElement('a');
-        link.href = url;
-        link.download = `Recibo_${folio}_${cliente}.pdf`;
-        document.body.appendChild(link);
+        link.download = `Recibo_${Date.now()}.png`;
+        link.href = canvas.toDataURL('image/png');
         link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
         
         v_ocultar_spinner();
-        alert("✅ PDF guardado. Revisa la carpeta Descargas.");
+        alert("✅ Imagen guardada en tu dispositivo");
         
     } catch(error) {
         v_ocultar_spinner();
