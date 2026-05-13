@@ -733,43 +733,41 @@ body {
         // FUNCIÓN CORREGIDA PARA PDF COMPLETO
         // ============================================
         async function v_descargar_pdf() {
-            const area = document.getElementById('v-print-area');
-            const folio = document.getElementById('r-fo').innerText;
-            const cliente = document.getElementById('r-cl').innerText;
-            
-            v_mostrar_spinner("Generando PDF...");
-            
-            // Guardar estilos originales
-            const originalHeight = area.style.height;
-            const originalOverflow = area.style.overflow;
-            
-            // Forzar que el área muestre todo su contenido sin recortes
-            area.style.height = 'auto';
-            area.style.overflow = 'visible';
-            
-            try {
-                const opt = {
-                    margin: [10, 10, 10, 10],
-                    filename: `Recibo_${folio}_${cliente}.pdf`,
-                    image: { type: 'jpeg', quality: 0.98 },
-                    html2canvas: { 
-                        scale: 3, 
-                        useCORS: true,
-                        logging: false,
-                        windowHeight: area.scrollHeight + 100  // Captura toda la altura real
-                    },
-                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-                };
-                await html2pdf().set(opt).from(area).save();
-            } catch(error) {
-                console.error(error);
-                alert('❌ Error al generar PDF');
-            } finally {
-                // Restaurar estilos originales
-                area.style.height = originalHeight;
-                area.style.overflow = originalOverflow;
-                v_ocultar_spinner();
-            }
+    const area = document.getElementById('v-print-area');
+    const folio = document.getElementById('r-fo').innerText;
+    const cliente = document.getElementById('r-cl').innerText;
+    
+    v_mostrar_spinner("Generando PDF...");
+    
+    try {
+        const opt = {
+            margin: [10, 10, 10, 10],
+            filename: `Recibo_${folio}_${cliente}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 3, useCORS: true },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+        
+        const worker = html2pdf().set(opt).from(area);
+        const pdf = await worker.outputPdf();
+        const blob = await pdf.output('blob');
+        const url = URL.createObjectURL(blob);
+        
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `Recibo_${folio}_${cliente}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        
+        v_ocultar_spinner();
+        alert("✅ PDF guardado. Revisa la carpeta Descargas.");
+        
+    } catch(error) {
+        v_ocultar_spinner();
+        alert('❌ Error: ' + error.message);
+    }
         }
         
         // ============================================
