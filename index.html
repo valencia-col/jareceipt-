@@ -501,16 +501,15 @@ body {
             <p style="text-align:right;margin-top:40px;font-size:12px;border-top:1px solid #ddd;padding-top:10px;">
                 <b>Local:</b> <span id="r-lo">Detectando...</span> | <span id="r-da"></span>
             </p>
-            <div id="v-leyenda-recibo">
-                <div style="font-size: 11px; color: #b8860b;">
-                    <i class="fas fa-info-circle"></i> <strong id="v-gracias-text">GRACIAS POR TU PAGO</strong>
-                </div>
-                <div id="v-leyenda-text" style="font-size: 10px; color: #8b6914; margin-top: 5px;">
-                    ⚠️ ESTE DOCUMENTO NO ES UNA FACTURA VÁLIDA - Es un comprobante de pago simple para control interno.
-                </div>
-            </div>
-        </div>
+            <!-- Leyenda multi-idioma (versión robusta) -->
+<div id="v-leyenda-recibo" style="margin-top: 25px; background: #fef9e6 !important; border-radius: 8px !important; padding: 12px !important; text-align: center !important; border: 1px solid #f1c40f !important; display: block !important;">
+    <div style="font-size: 11px; color: #b8860b !important;">
+        <i class="fas fa-info-circle"></i> <strong id="v-gracias-text" style="color: #b8860b !important;">GRACIAS POR TU PAGO</strong>
     </div>
+    <div id="v-leyenda-text" style="font-size: 10px; color: #8b6914 !important; margin-top: 5px !important; display: block !important;">
+        ⚠️ ESTE DOCUMENTO NO ES UNA FACTURA VÁLIDA - Es un comprobante de pago simple para control interno.
+    </div>
+</div>
 
     <!-- Pantalla de historial -->
     <div id="v-history-screen">
@@ -657,6 +656,7 @@ body {
             
             let numeroFolio = parseInt(localStorage.getItem('v_folio_num') || '1');
             const folio = numeroFolio.toString().padStart(3, '0');
+            v_update_methods();  // ← Esto fuerza la actualización de la leyenda
             
             const empresa = document.getElementById('v-em').value.toUpperCase() || "EMPRESA";
             const nit = document.getElementById('v-id').value || "N/A";
